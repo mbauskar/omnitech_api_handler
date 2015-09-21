@@ -26,7 +26,7 @@ app_version = "0.0.1"
 
 # application home page (will override Website Settings)
 # home_page = "login"
-api_name = "propshikari"
+api_name = "omni_api"
 
 # website user home page (by Role)
 # role_home_page = {
@@ -78,23 +78,23 @@ api_name = "propshikari"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"api_handler.tasks.all"
-# 	],
-# 	"daily": [
-# 		"api_handler.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"api_handler.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"api_handler.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"api_handler.tasks.monthly"
-# 	]
-# }
+scheduler_events = {
+	"all": [
+		"api_handler.custom_scheduler_methods.execute_scheduler_methods"
+	]
+	# "daily": [
+	# 	"api_handler.tasks.daily"
+	# ],
+	# "hourly": [
+	# 	"api_handler.tasks.hourly"
+	# ],
+	# "weekly": [
+	# 	"api_handler.tasks.weekly"
+	# ]
+	# "monthly": [
+	# 	"api_handler.tasks.monthly"
+	# ]
+}
 
 # Testing
 # -------
@@ -107,4 +107,3 @@ api_name = "propshikari"
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "api_handler.event.get_events"
 # }
-
