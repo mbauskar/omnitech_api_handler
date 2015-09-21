@@ -12,7 +12,8 @@ from rest_api_methods import create_customer
 def handle():
 	try:
 		frappe.response['X_ERROR_CODE'] = 02
-		frappe.response['X_ERROR_DESC'] = "Successfully Accept request"
+		# frappe.response['X_ERROR_DESC'] = "Successfully Accept request"
+		frappe.response['X_ERROR_DESC'] = "Successfully"
 		response = build_response("json")
 		create_scheduler_task(frappe.local.form_dict.cmd, frappe.local.form_dict.data)
 		return response
