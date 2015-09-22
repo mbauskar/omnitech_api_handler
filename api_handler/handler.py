@@ -13,7 +13,7 @@ def handle():
 	try:
 		frappe.response['X_ERROR_CODE'] = 02
 		# frappe.response['X_ERROR_DESC'] = "Successfully Accept request"
-		frappe.response['X_ERROR_DESC'] = "Successfully"
+		frappe.response['X_ERROR_DESC'] = "S"
 		response = build_response("json")
 		create_scheduler_task(frappe.local.form_dict.cmd, frappe.local.form_dict.data)
 		return response
