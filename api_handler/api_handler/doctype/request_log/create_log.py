@@ -13,4 +13,6 @@ def request_log(method, response, request_data, error=None):
     req_log.save(ignore_permissions=True)
 
 def get_json(data):
+    print data
+    print type(data)
     return json.loads(data)

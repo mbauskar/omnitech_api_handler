@@ -25,3 +25,15 @@ def create_contact(obj, args):
     contact.phone = args.get('P_CONTACT_NO')
     contact.customer = obj.name
     contact.save(ignore_permissions=True)
+
+def delete_customer(obj, args):
+    pass
+
+def create_service(obj, args):
+    pass
+
+def disconnect_service(obj, args):
+    pass
+
+def control_action(obj, args):
+    pass

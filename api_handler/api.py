@@ -24,7 +24,7 @@ def handle():
 		validate_request()
 		return handler.handle()
 	except Exception, e:
-		frappe.response['X_ERROR_CODE'] = 01
+		frappe.response['X_ERROR_CODE'] = "01"
 		frappe.response['X_ERROR_DESC'] = cstr(e)
 		response = build_response("json")
 		return response

@@ -5,7 +5,8 @@ import frappe.sessions
 from response import build_response,report_error
 import api_handler
 import json
-from rest_api_methods import create_customer
+from rest_api_methods import create_customer, delete_customer, create_service, \
+                            disconnect_service, control_action
 
 def execute_scheduler_methods():
     print "hhhhhhhhhhhhhhhhhhhhhh"
