@@ -68,11 +68,9 @@ api_name = "omni_api"
 # Hook on document methods and events
 
 # doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
+# 	"Request Log": {
+# 		"on_update": "api_handler.api_handler.doctype.request_log.create_log.test",
+# 	}
 # }
 
 # Scheduled Tasks

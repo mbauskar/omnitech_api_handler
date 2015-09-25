@@ -9,7 +9,6 @@ from rest_api_methods import create_customer, delete_customer, create_service, \
                             disconnect_service, control_action
 
 def execute_scheduler_methods():
-    print "hhhhhhhhhhhhhhhhhhhhhh"
     execute_web_serices()
 
 def execute_web_serices():
