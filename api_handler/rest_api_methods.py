@@ -44,39 +44,39 @@ def delete_customer(req_params):
     pass
 
 def create_service(req_params):
-    # create new doc of type Sites
+	# create new doc of type Sites
 	try:
-	    args = get_json(req_params)
-	    create_sites_doc(args)
-	    create_new_site(args.get("P_USER_NAME"), is_active=True)
+		args = get_json(req_params)
+		create_sites_doc(args)
+		create_new_site(args.get("P_USER_NAME"), is_active=True)
 		response = {
-            "P_RETURN_CODE":"S",
-            "P_RETURN_MESG":"Success"
-        }
-        request_log('create_service',json.dumps(response) , data)
+		    "P_RETURN_CODE":"S",
+		    "P_RETURN_MESG":"Success"
+		}
+		request_log('create_service',json.dumps(response) , args)
 	except Exception, e:
 		response = {
-            "P_RETURN_CODE":"E",
-            "P_RETURN_MESG":str(e)
-        }
-        request_log('create_service',json.dumps(response) , data)
+		    "P_RETURN_CODE":"E",
+		    "P_RETURN_MESG":str(e)
+		}
+		request_log('create_service',json.dumps(response) , args)
 
 def disconnect_service(req_params):
 	try:
-	    args = get_json(req_params)
-	    update_sites_doc(args.get("P_USER_NAME"), is_active=0)
-	    disable_site(args.get("P_USER_NAME"))
+		args = get_json(req_params)
+		update_sites_doc(args.get("P_USER_NAME"), is_active=0)
+		disable_site(args.get("P_USER_NAME"))
 		response = {
-            "P_RETURN_CODE":"S",
-            "P_RETURN_MESG":"Success"
-        }
-        request_log('disconnect_service',json.dumps(response) , data)
+		    "P_RETURN_CODE":"S",
+		    "P_RETURN_MESG":"Success"
+		}
+		request_log('disconnect_service',json.dumps(response) , args)
 	except Exception, e:
 		response = {
-            "P_RETURN_CODE":"E",
-            "P_RETURN_MESG":str(e)
-        }
-        request_log('disconnect_service',json.dumps(response) , data)
+		    "P_RETURN_CODE":"E",
+		    "P_RETURN_MESG":str(e)
+		}
+		request_log('disconnect_service',json.dumps(response) , args)
 
 def control_action(req_params):
     pass
@@ -104,9 +104,10 @@ def create_new_site(domain_name, is_active=False):
 	            get_default_admin_pwd(), "domain_name")
 	bench_use = "bench use {0}".format(domain_name)
 	set_config = "bench set-config is_disabled {0}".format(0 if is_active else 1)
+	default_site = "bench use {0}".format("www.test.com")
 	nginx_setup = "bench setup nginx"
 
-	for cmd in [new_site, bench_use, set_config, nginx_setup]:
+	for cmd in [new_site, bench_use, set_config, default_site, nginx_setup]:
 	    exec_cmd(cmd, cwd=get_target_banch())
 
 def get_mariadb_root_pwd():
@@ -144,9 +145,10 @@ def update_sites_doc(domain, is_active=True):
 def disable_site(domain):
 	bench_use = "bench use {0}".format(domain)
 	set_config = "bench set-config is_disabled 1"
+	default_site = "bench use {0}".format("www.test.com")
 	nginx_setup = "bench setup nginx"
 
-	for cmd in [bench_use, set_config, nginx_setup]:
+	for cmd in [bench_use, set_config, default_site,nginx_setup]:
 	    exec_cmd(cmd, cwd=get_target_banch())
 
 def exec_cmd(cmd, cwd='.'):
