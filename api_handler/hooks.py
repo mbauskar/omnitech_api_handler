@@ -67,11 +67,14 @@ api_name = "omni_api"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"Request Log": {
-# 		"on_update": "api_handler.api_handler.doctype.request_log.create_log.test",
-# 	}
-# }
+doc_events = {
+	# "Request Log": {
+	# 	"on_update": "api_handler.api_handler.doctype.request_log.create_log.pass_request_to_client_esb",
+	# },
+	"Global Defaults": {
+		"on_update": "api_handler.api_handler.validate_methods.validate_bench_path",
+	}
+}
 
 # Scheduled Tasks
 # ---------------

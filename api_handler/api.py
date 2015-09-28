@@ -8,7 +8,7 @@ from frappe import _
 import handler
 from frappe.utils import cstr, flt, getdate, comma_and, cint
 from api_handler.validate_methods import validate_url, validate_mandatory_field, \
-			validate_authentication_token, validate_customer_data
+			validate_authentication_token, validate_request_parameters
 from response import build_response,report_error
 
 def handle():
@@ -33,4 +33,5 @@ def validate_request():
 	validate_url()
 	validate_mandatory_field()
 	validate_authentication_token()
-	validate_customer_data()
+	# validate_customer_data()
+	validate_request_parameters()

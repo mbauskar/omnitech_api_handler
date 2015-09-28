@@ -38,9 +38,46 @@ def validate_authentication_token():
 	else:
 		frappe.throw(_('Authentication token has not been set, contact to support team'))
 
-def validate_customer_data():
-	data = get_json(frappe.local.form_dict.data)
-	if frappe.local.form_dict.cmd == 'create_customer':
-		if frappe.db.get_value('Selling Settings', None, 'cust_master_name') == 'Customer Name':
-			if frappe.db.get_value('Customer', data.get('P_CUST_NAME'), 'name'):
-				frappe.throw(_("Customer {0} is already exist").format(data.get('P_CUST_NAME')))
+# def validate_customer_data():
+def validate_request_parameters():
+    params = get_json(frappe.local.form_dict.data)
+    cmd = frappe.local.form_dict.cmd
+    if cmd == 'create_customer':
+        is_customer_already_exsits(params)
+    # elif cmd == 'delete_customer':pass
+    elif cmd == 'create_service':
+        domain_name = params.get("P_USER_NAME")
+        if is_domain_name_already_exsits(domain_name):
+            frappe.throw(_("{0} Domain already exist".format(domain_name)))
+        else:
+            validate_domain_name(domain_name)
+    elif cmd == 'disconnect_service':
+        domain_name = params.get("P_USER_NAME")
+        if not is_domain_name_already_exsits(domain_name):
+            frappe.throw(_("Requested Domain does not exist, Please check domain name in request".format(domain_name)))
+    # elif cmd == 'control_action':pass
+
+def is_customer_already_exsits(req_params):
+    if frappe.db.get_value('Selling Settings', None, 'cust_master_name') == 'Customer Name':
+        if frappe.db.get_value('Customer', req_params.get('P_CUST_NAME'), 'name'):
+            frappe.throw(_("Customer {0} is already exist").format(req_params.get('P_CUST_NAME')))
+
+def is_domain_name_already_exsits(domain_name):
+    if frappe.db.get_value("Sites",domain_name, 'name'):
+        return True
+    else:
+        return False
+
+def validate_domain_name(domain_name):
+    # validate the domain name
+    # ^[w]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$
+    # ^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$
+    import re
+    pattern = "^[w]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$"
+    if not re.match(pattern, domain_name):
+        frappe.throw("Invalid Domain Name")
+
+def validate_bench_path(doc, method):
+    import os
+    if not os.path.exists(doc.path):
+        frappe.throw("<b>{0}</b><br>Directory does not exists, Please check the directory Path".format(doc.path))
