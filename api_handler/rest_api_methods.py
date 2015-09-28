@@ -45,14 +45,38 @@ def delete_customer(req_params):
 
 def create_service(req_params):
     # create new doc of type Sites
-    args = get_json(req_params)
-    create_sites_doc(args)
-    create_new_site(args.get("P_USER_NAME"), is_active=True)
+	try:
+	    args = get_json(req_params)
+	    create_sites_doc(args)
+	    create_new_site(args.get("P_USER_NAME"), is_active=True)
+		response = {
+            "P_RETURN_CODE":"S",
+            "P_RETURN_MESG":"Success"
+        }
+        request_log('create_service',json.dumps(response) , data)
+	except Exception, e:
+		response = {
+            "P_RETURN_CODE":"E",
+            "P_RETURN_MESG":str(e)
+        }
+        request_log('create_service',json.dumps(response) , data)
 
 def disconnect_service(req_params):
-    args = get_json(req_params)
-    update_sites_doc(args.get("P_USER_NAME"), is_active=0)
-    disable_site(args.get("P_USER_NAME"))
+	try:
+	    args = get_json(req_params)
+	    update_sites_doc(args.get("P_USER_NAME"), is_active=0)
+	    disable_site(args.get("P_USER_NAME"))
+		response = {
+            "P_RETURN_CODE":"S",
+            "P_RETURN_MESG":"Success"
+        }
+        request_log('disconnect_service',json.dumps(response) , data)
+	except Exception, e:
+		response = {
+            "P_RETURN_CODE":"E",
+            "P_RETURN_MESG":str(e)
+        }
+        request_log('disconnect_service',json.dumps(response) , data)
 
 def control_action(req_params):
     pass
@@ -76,7 +100,6 @@ def create_new_site(domain_name, is_active=False):
     # 1 Create new site instance
     # 2 If is_active is false add is_disabled param in site.config
     # 3 Run bench setup nginx to add nginx settings
-    # target_bench = "/home/makarand/workspace/omnitech/omnitech_sites/frappe-bench"
 	new_site = "bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(get_mariadb_root_pwd(),
 	            get_default_admin_pwd(), "domain_name")
 	bench_use = "bench use {0}".format(domain_name)
