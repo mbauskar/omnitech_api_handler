@@ -10,6 +10,8 @@ import json
 class CommandFailedError(Exception):
 	pass
 
+# TODO response structure
+
 def create_customer(data):
     try:
         data = get_json(data)
@@ -40,20 +42,23 @@ def create_contact(obj, args):
     contact.customer = obj.name
     contact.save(ignore_permissions=True)
 
-def delete_customer(req_params):
+def delete_customer(args):
     pass
 
-def create_service(req_params):
+def create_service(args):
 	# create new doc of type Sites
 	try:
-		args = get_json(req_params)
-		create_new_site(args.get("P_USER_NAME"), is_active=True)
-		create_sites_doc(args)
-		response = {
-		    "P_RETURN_CODE":"S",
-		    "P_RETURN_MESG":"Success"
-		}
-		request_log('create_service',json.dumps(response) , args)
+		if isinstance(args, unicode): args = get_json(args)
+		if not is_site_already_exists(args.get("P_USER_NAME")):
+			create_new_site(args.get("P_USER_NAME"), is_active=True)
+			create_sites_doc(args)
+			response = {
+			    "P_RETURN_CODE":"S",
+			    "P_RETURN_MESG":"Success"
+			}
+			request_log('create_service',json.dumps(response) , args)
+		else:
+			frappe.throw("Requested site (%s) already exist"%(args.get("P_USER_NAME")))
 	except Exception, e:
 		response = {
 		    "P_RETURN_CODE":"E",
@@ -62,15 +67,21 @@ def create_service(req_params):
 		request_log('create_service',json.dumps(response) , args)
 
 def disconnect_service(args):
-	if isinstance(args, unicode): args = get_json(args)
 	try:
-		configure_site(args.get("P_USER_NAME"), is_disabled=True)
-		update_sites_doc(args.get("P_USER_NAME"), is_active=False)
-		response = {
-		    "P_RETURN_CODE":"S",
-		    "P_RETURN_MESG":"Success"
-		}
-		request_log('disconnect_service',json.dumps(response) , args)
+		if isinstance(args, unicode): args = get_json(args)
+		if is_site_already_exists(args.get("P_USER_NAME")):
+			if not frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
+				configure_site(args.get("P_USER_NAME"), is_disabled=True)
+				update_sites_doc(args.get("P_USER_NAME"), is_active=False)
+				response = {
+				    "P_RETURN_CODE":"S",
+				    "P_RETURN_MESG":"Success"
+				}
+				request_log('disconnect_service',json.dumps(response) , args)
+			else:
+			frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
+		else:
+			frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
 	except Exception, e:
 		response = {
 		    "P_RETURN_CODE":"E",
@@ -79,15 +90,21 @@ def disconnect_service(args):
 		request_log('disconnect_service',json.dumps(response) , args)
 
 def restart_service(args):
-	if isinstance(args, unicode): args = get_json(args)
 	try:
-		configure_site(args.get("P_USER_NAME"), is_disabled=False)
-		update_sites_doc(args.get("P_USER_NAME"), is_active=True)
-		response = {
-		    "P_RETURN_CODE":"S",
-		    "P_RETURN_MESG":"Success"
-		}
-		request_log('disconnect_service',json.dumps(response) , args)
+		if isinstance(args, unicode): args = get_json(args)
+		if is_site_already_exists(args.get("P_USER_NAME")):
+			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
+				configure_site(args.get("P_USER_NAME"), is_disabled=False)
+				update_sites_doc(args.get("P_USER_NAME"), is_active=True)
+				response = {
+				    "P_RETURN_CODE":"S",
+				    "P_RETURN_MESG":"Success"
+				}
+				request_log('disconnect_service',json.dumps(response) , args)
+			else:
+				frappe.throw("Requested site (%s) is already active"%(args.get("P_USER_NAME")))
+		else:
+			frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
 	except Exception, e:
 		response = {
 		    "P_RETURN_CODE":"E",
@@ -115,6 +132,11 @@ def create_sites_doc(args):
     site = frappe.get_doc(doc)
     site.ignore_permissions = True
     site.save()
+
+def is_site_already_exists(domain):
+	site = frappe.get_doc("Sites", domain)
+	result = True if site else False
+	return result
 
 def create_new_site(domain_name, is_active=False):
     # TODO
