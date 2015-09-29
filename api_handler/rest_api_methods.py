@@ -47,8 +47,8 @@ def create_service(req_params):
 	# create new doc of type Sites
 	try:
 		args = get_json(req_params)
-		create_sites_doc(args)
 		create_new_site(args.get("P_USER_NAME"), is_active=True)
+		create_sites_doc(args)
 		response = {
 		    "P_RETURN_CODE":"S",
 		    "P_RETURN_MESG":"Success"
@@ -61,11 +61,11 @@ def create_service(req_params):
 		}
 		request_log('create_service',json.dumps(response) , args)
 
-def disconnect_service(req_params):
+def disconnect_service(args):
+	if isinstance(args, unicode): args = get_json(args)
 	try:
-		args = get_json(req_params)
-		update_sites_doc(args.get("P_USER_NAME"), is_active=0)
-		disable_site(args.get("P_USER_NAME"))
+		configure_site(args.get("P_USER_NAME"), is_disabled=True)
+		update_sites_doc(args.get("P_USER_NAME"), is_active=False)
 		response = {
 		    "P_RETURN_CODE":"S",
 		    "P_RETURN_MESG":"Success"
@@ -78,8 +78,29 @@ def disconnect_service(req_params):
 		}
 		request_log('disconnect_service',json.dumps(response) , args)
 
-def control_action(req_params):
-    pass
+def restart_service(args):
+	if isinstance(args, unicode): args = get_json(args)
+	try:
+		configure_site(args.get("P_USER_NAME"), is_disabled=False)
+		update_sites_doc(args.get("P_USER_NAME"), is_active=True)
+		response = {
+		    "P_RETURN_CODE":"S",
+		    "P_RETURN_MESG":"Success"
+		}
+		request_log('disconnect_service',json.dumps(response) , args)
+	except Exception, e:
+		response = {
+		    "P_RETURN_CODE":"E",
+		    "P_RETURN_MESG":str(e)
+		}
+		request_log('disconnect_service',json.dumps(response) , args)
+
+def control_action(args):
+	args = get_json(args)
+	if args.get("P_CREDIT_ACTION") in ["TOS","SUSPEND"]:
+		disconnect_service(args);
+	else:
+		restart_service(args)
 
 def create_sites_doc(args):
     doc = {
@@ -97,17 +118,16 @@ def create_sites_doc(args):
 
 def create_new_site(domain_name, is_active=False):
     # TODO
-    # 1 Create new site instance
-    # 2 If is_active is false add is_disabled param in site.config
-    # 3 Run bench setup nginx to add nginx settings
+	# get-app ??, reload nginx and supervisor
 	new_site = "bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(get_mariadb_root_pwd(),
-	            get_default_admin_pwd(), "domain_name")
+	            get_default_admin_pwd(), domain_name)
 	bench_use = "bench use {0}".format(domain_name)
 	set_config = "bench set-config is_disabled {0}".format(0 if is_active else 1)
+	install_app = "bench install-app erpnext"
 	default_site = "bench use {0}".format("www.test.com")
 	nginx_setup = "bench setup nginx"
 
-	for cmd in [new_site, bench_use, set_config, default_site, nginx_setup]:
+	for cmd in [new_site, bench_use, set_config, install_app, default_site, nginx_setup]:
 	    exec_cmd(cmd, cwd=get_target_banch())
 
 def get_mariadb_root_pwd():
@@ -142,9 +162,9 @@ def update_sites_doc(domain, is_active=True):
     else:
         frappe.throw("{0} domain not found in Sites".format(domain))
 
-def disable_site(domain):
+def configure_site(domain, is_disabled=False):
 	bench_use = "bench use {0}".format(domain)
-	set_config = "bench set-config is_disabled 1"
+	set_config = "bench set-config is_disabled {0}".format(1 if is_disabled else 0)
 	default_site = "bench use {0}".format("www.test.com")
 	nginx_setup = "bench setup nginx"
 

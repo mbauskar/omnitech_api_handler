@@ -28,6 +28,8 @@ def validate_mandatory_field():
     for key in mandatory_fields.get(frappe.local.form_dict.cmd):
         if not data.get(key):
             frappe.throw(_("{0} field is mandatory").format(key))
+        elif key == "P_CREDIT_ACTION" and data.get(key) not in ["TOS","ROS","SUSPEND"]:
+            frappe.throw(_("Invalid P_CREDIT_ACTION value"))
 
 def validate_authentication_token():
 	data = get_json(frappe.local.form_dict.data)
@@ -42,6 +44,11 @@ def validate_authentication_token():
 def validate_request_parameters():
     params = get_json(frappe.local.form_dict.data)
     cmd = frappe.local.form_dict.cmd
+
+    if is_request_already_exists(cmd, params):
+		err_msg = "Ignoring Request as the same request is already exists in scheduler queue"
+		raise Exception(err_msg)
+
     if cmd == 'create_customer':
         is_customer_already_exsits(params)
     # elif cmd == 'delete_customer':pass
@@ -55,7 +62,10 @@ def validate_request_parameters():
         domain_name = params.get("P_USER_NAME")
         if not is_domain_name_already_exsits(domain_name):
             frappe.throw(_("Requested Domain does not exist, Please check domain name in request".format(domain_name)))
-    # elif cmd == 'control_action':pass
+    elif cmd == 'control_action':
+        domain_name = params.get("P_USER_NAME")
+        if not is_domain_name_already_exsits(domain_name):
+            frappe.throw(_("Requested Domain does not exist, Please check domain name in request".format(domain_name)))
 
 def is_customer_already_exsits(req_params):
     if frappe.db.get_value('Selling Settings', None, 'cust_master_name') == 'Customer Name':
@@ -81,3 +91,12 @@ def validate_bench_path(doc, method):
     import os
     if not os.path.exists(doc.path):
         frappe.throw("<b>{0}</b><br>Directory does not exists, Please check the directory Path".format(doc.path))
+
+def is_request_already_exists(service, req_params):
+    query = """ SELECT request_data FROM `tabScheduler Task` WHERE method_name='%s' AND
+                task_status<>'Completed'"""%(service)
+    results = frappe.db.sql(query, as_list=True, debug=True)
+
+    requests = [res[0] for res in results if json.loads(res[0]) == req_params]
+    flag = False if not requests  else True
+    return flag

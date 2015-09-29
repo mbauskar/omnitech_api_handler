@@ -24,6 +24,8 @@ def handle():
 		validate_request()
 		return handler.handle()
 	except Exception, e:
+		import traceback
+		print traceback.format_exc()
 		frappe.response['X_ERROR_CODE'] = "01"
 		frappe.response['X_ERROR_DESC'] = cstr(e)
 		response = build_response("json")
