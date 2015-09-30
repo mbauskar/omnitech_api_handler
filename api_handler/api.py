@@ -7,8 +7,7 @@ import frappe
 from frappe import _
 import handler
 from frappe.utils import cstr, flt, getdate, comma_and, cint
-from api_handler.validate_methods import validate_url, validate_mandatory_field, \
-			validate_authentication_token, validate_request_parameters
+from api_handler.validate_methods import validate_request
 from response import build_response,report_error
 
 def handle():
@@ -28,12 +27,5 @@ def handle():
 		print traceback.format_exc()
 		frappe.response['X_ERROR_CODE'] = "01"
 		frappe.response['X_ERROR_DESC'] = cstr(e)
-		response = build_response("json")
+		response = build_response("xml")
 		return response
-
-def validate_request():
-	validate_url()
-	validate_mandatory_field()
-	validate_authentication_token()
-	# validate_customer_data()
-	validate_request_parameters()
