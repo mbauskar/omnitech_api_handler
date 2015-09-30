@@ -17,10 +17,12 @@ def handle():
 		create_scheduler_task(frappe.local.form_dict.cmd, frappe.local.form_dict.data)
 		return response
 	except Exception, e:
-		pass
+		import traceback
+		print traceback.format_exc()
+		raise Exception("Error while processing request, Please contact Administrator")
 
 def create_scheduler_task(method_name, request_data):
 	schedule_task = frappe.new_doc('Scheduler Task')
 	schedule_task.method_name = method_name
-	schedule_task.request_data = request_data
+	schedule_task.request_data = json.dumps(request_data)
 	schedule_task.save(ignore_permissions=True)

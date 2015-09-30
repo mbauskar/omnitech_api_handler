@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 import handler
 from frappe.utils import cstr, flt, getdate, comma_and, cint
-from api_handler.validate_methods import validate_request
+from api_handler.validate_methods import validate_and_get_json_request
 from response import build_response,report_error
 
 def handle():
@@ -20,7 +20,7 @@ def handle():
 
 	"""
 	try:
-		validate_request()
+		validate_and_get_json_request()
 		return handler.handle()
 	except Exception, e:
 		import traceback

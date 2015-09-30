@@ -15,12 +15,15 @@ mandatory_fields = {
 	'control_action': ['P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_CREDIT_ACTION','P_AUTHENTICATE'],
 }
 
-def validate_request():
+def validate_and_get_json_request():
     req_params = xml_to_json(frappe.local.form_dict.data)
+    frappe.local.form_dict.data = req_params
+    # print "assign",frappe.local.form_dict.data
     validate_url()
     validate_mandatory_field(req_params)
     validate_authentication_token(req_params)
     validate_request_parameters(req_params)
+    # return req_params
 
 def validate_url():
 	path = frappe.request.path[1:].split("/",2)
@@ -102,7 +105,7 @@ def is_request_already_exists(service, req_params):
     query = """ SELECT request_data FROM `tabScheduler Task` WHERE method_name='%s' AND
                 task_status<>'Completed'"""%(service)
     results = frappe.db.sql(query, as_list=True, debug=True)
-
+    print "results",results
     requests = [res[0] for res in results if json.loads(res[0]) == req_params]
     flag = False if not requests  else True
     return flag
