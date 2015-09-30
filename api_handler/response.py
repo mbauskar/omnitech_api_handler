@@ -14,6 +14,7 @@ from werkzeug.local import LocalProxy
 from werkzeug.wsgi import wrap_file
 from werkzeug.wrappers import Response
 from werkzeug.exceptions import NotFound, Forbidden
+from utils import json_to_xml
 
 def report_error(status_code,message):
 	frappe.response["code"] = status_code
@@ -27,10 +28,10 @@ def build_response(response_type=None):
 
 	response_type_map = {
 		'json': as_json,
+		'xml':as_xml
 	}
 
 	return response_type_map[frappe.response.get('type') or response_type]()
-
 
 def as_json():
 	make_logs()
@@ -41,6 +42,17 @@ def as_json():
 
 	response.headers[b"Content-Type"] = b"application/json; charset: utf-8"
 	response.data = json.dumps(frappe.local.response, default=json_handler, separators=(',',':'))
+	return response
+
+def as_xml():
+	make_logs()
+	response = Response()
+	if frappe.local.response.status_code:
+		response.status_code = frappe.local.response['status_code']
+		del frappe.local.response['status_code']
+
+	response.headers[b"Content-Type"] = b"application/xml; charset: utf-8"
+	response.data = json_to_xml(frappe.local.response, as_str=True)
 	return response
 
 def make_logs(response = None):
