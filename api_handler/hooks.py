@@ -97,6 +97,8 @@ scheduler_events = {
 	# ]
 }
 
+fixtures = ["Custom Field"]
+
 # Testing
 # -------
 
