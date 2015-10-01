@@ -7,6 +7,29 @@ from api_handler.api_handler.doctype.request_log.create_log import get_json
 from api_handler.utils import xml_to_json
 from frappe import _
 
+services_fields = {
+    'create_customer': [
+        'P_TRXN_NO', 'P_CPR_CR', 'P_CUST_NAME', 'P_USER_NAME','P_CONTACT_NO',
+        'P_EMAIL', 'P_ORDER_NO', 'P_AUTHENTICATE', "P_CIRCUIT_NO","P_ATTRIBUTE1",
+        "P_ATTRIBUTE2"
+    ],
+	'delete_customer': [
+        'P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO','P_AUTHENTICATE',
+        'P_ATTRIBUTE1','P_ATTRIBUTE2'
+    ],
+	'create_service': [
+        'P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO', 'P_PACKAGE_ID',
+        'P_AUTHENTICATE','P_ATTRIBUTE1','P_ATTRIBUTE2'
+    ],
+	'disconnect_service': [
+        'P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO', 'P_PACKAGE_ID',
+        'P_AUTHENTICATE','P_ATTRIBUTE1','P_ATTRIBUTE2'
+    ],
+	'control_action': [
+        'P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_CREDIT_ACTION','P_AUTHENTICATE',
+        'P_ATTRIBUTE1','P_ATTRIBUTE2'
+    ],
+}
 mandatory_fields = {
     'create_customer': ['P_TRXN_NO', 'P_CPR_CR', 'P_CUST_NAME', 'P_USER_NAME','P_CONTACT_NO', 'P_EMAIL', 'P_ORDER_NO', 'P_AUTHENTICATE', "P_CIRCUIT_NO"],
 	'delete_customer': ['P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO','P_AUTHENTICATE'],
@@ -41,11 +64,12 @@ def validate_mandatory_field(req_params):
     data = req_params
     # check missing or extra fields
     missing_fields = [field for field in mandatory_fields.get(frappe.local.form_dict.cmd) if field not in data.keys()]
-    extra_fields = [field for field in data.keys() if field not in mandatory_fields.get(frappe.local.form_dict.cmd)]
+    extra_fields = [field for field in data.keys() if field not in services_fields.get(frappe.local.form_dict.cmd)]
+
     if extra_fields:
-        frappe.throw(_("Invalid XML Request"))
+        frappe.throw(_("XML Request contains following extra field(s): {0}".format(",".join(extra_fields))))
     if missing_fields:
-        frappe.throw(_("XML Request is missing following field(s): {0}").format(",".join(missing_fields)))
+        frappe.throw(_("XML Request is missing following field(s): {0}".format(",".join(missing_fields))))
     # check mandatory fields
     for key in mandatory_fields.get(frappe.local.form_dict.cmd):
         if not data.get(key):
