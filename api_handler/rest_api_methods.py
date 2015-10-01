@@ -11,6 +11,7 @@ class CommandFailedError(Exception):
 	pass
 
 def create_customer(data):
+	# TODO Save circuit number
     try:
         data = get_json(data)
         customer = frappe.new_doc('Customer')
@@ -141,8 +142,7 @@ def is_site_already_exists(domain):
 
 def create_new_site(domain_name, is_active=False):
     # TODO
-	# get-app ??, reload nginx and supervisor
-	# add default sites in global config
+	# reload nginx and supervisor
 	new_site = "bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(get_mariadb_root_pwd(),
 	            get_default_admin_pwd(), domain_name)
 	bench_use = "bench use {0}".format(domain_name)
@@ -163,7 +163,7 @@ def get_mariadb_root_pwd():
 		frappe.throw("MariaDB is not configured, Please contact Administrator")
 
 def get_default_site():
-	return "www.test.com"
+	# return "www.test.com"
 	default_site = frappe.db.get_value("Global Defaults","Global Defaults", "default_site")
 	if default_site:
 		return default_site

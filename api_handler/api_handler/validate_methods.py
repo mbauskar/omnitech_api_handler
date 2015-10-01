@@ -15,15 +15,20 @@ mandatory_fields = {
 	'control_action': ['P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_CREDIT_ACTION','P_AUTHENTICATE'],
 }
 
+fields_and_types ={
+    "P_TRXN_NO": "int", "P_CPR_CR": "string", "P_CUST_NAME": "string",
+    "P_USER_NAME": "string", "P_CONTACT_NO": "string", "P_EMAIL": "string",
+    "P_ORDER_NO": "string", "P_AUTHENTICATE": "string", "P_CIRCUIT_NO": "string",
+    "P_PACKAGE_ID": "string", "P_CREDIT_ACTION": "string"
+}
+
 def validate_and_get_json_request():
     req_params = xml_to_json(frappe.local.form_dict.data)
     frappe.local.form_dict.data = req_params
-    # print "assign",frappe.local.form_dict.data
     validate_url()
     validate_mandatory_field(req_params)
     validate_authentication_token(req_params)
     validate_request_parameters(req_params)
-    # return req_params
 
 def validate_url():
 	path = frappe.request.path[1:].split("/",2)
@@ -39,6 +44,19 @@ def validate_mandatory_field(req_params):
             frappe.throw(_("{0} field is mandatory").format(key))
         elif key == "P_CREDIT_ACTION" and data.get(key) not in ["TOS","ROS","SUSPEND"]:
             frappe.throw(_("Invalid P_CREDIT_ACTION value"))
+
+        is_valid_datatype(key, data.get(key))
+
+def is_valid_datatype(field, val):
+    # TODO type checking
+    # error = Exception("Invalid data type for {0} parameter".format(field))
+    # if fields_and_types.get(field) == "int":
+    #     if not isinstance(val, int):
+    #         raise error
+    # else:
+    #     if not isinstance(val, unicode):
+    #         raise error
+    pass
 
 def validate_authentication_token(req_params):
     data = req_params
@@ -96,16 +114,21 @@ def validate_domain_name(domain_name):
     if not re.match(pattern, domain_name):
         frappe.throw("Invalid Domain Name")
 
+def is_request_already_exists(service, req_params):
+    query = """ SELECT request_data FROM `tabScheduler Task` WHERE method_name='%s' AND
+                task_status<>'Completed'"""%(service)
+    results = frappe.db.sql(query, as_list=True, debug=True)
+    requests = [res[0] for res in results if json.loads(res[0]) == req_params]
+    flag = False if not requests  else True
+    return flag
+
 def validate_bench_path(doc, method):
     import os
     if not os.path.exists(doc.path):
         frappe.throw("<b>{0}</b><br>Directory does not exists, Please check the directory Path".format(doc.path))
 
-def is_request_already_exists(service, req_params):
-    query = """ SELECT request_data FROM `tabScheduler Task` WHERE method_name='%s' AND
-                task_status<>'Completed'"""%(service)
-    results = frappe.db.sql(query, as_list=True, debug=True)
-    print "results",results
-    requests = [res[0] for res in results if json.loads(res[0]) == req_params]
-    flag = False if not requests  else True
-    return flag
+def validate_token_before_save(doc, method):
+    import re
+    pattern = "^\d+$"
+    if re.match(pattern, doc.token):
+        frappe.throw("Invalid Token, Please use alpha-numeric value as token")

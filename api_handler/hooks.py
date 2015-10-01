@@ -72,7 +72,10 @@ doc_events = {
 	# 	"on_update": "api_handler.api_handler.doctype.request_log.create_log.pass_request_to_client_esb",
 	# },
 	"Global Defaults": {
-		"on_update": "api_handler.api_handler.validate_methods.validate_bench_path",
+		"on_update": [
+			"api_handler.api_handler.validate_methods.validate_bench_path",
+			"api_handler.api_handler.validate_methods.validate_token_before_save"
+		],
 	}
 }
 

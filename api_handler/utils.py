@@ -32,7 +32,7 @@ class objectJSONEncoder(simplejson.JSONEncoder):
 
 def xml_to_json(xml, as_dict=True):
     """
-        convert xml to json, if as_str is true then return json as string
+        convert xml to json, if as_dict is true then return json as dict
     """
     try:
         if isinstance(xml, unicode):
@@ -56,14 +56,12 @@ service_response_mapper = {
 
 def json_to_xml(_json, as_str=True):
     path = frappe.request.path[1:].split("/",2)
-    print "path",path
     cmd = ""
     if len(path) == 2:
     	cmd = path[1]
         root = etree.Element(service_response_mapper.get(cmd))
         root.extend([E.X_ERROR_CODE(_json.X_ERROR_CODE),
                     E.X_ERROR_DESC(_json.X_ERROR_DESC)])
-        print etree.tostring(root)
         return etree.tostring(root)
     else:
     	frappe.throw(_("Invalid URL"))
