@@ -25,6 +25,6 @@ def handle():
 	except Exception, e:
 		import traceback
 		print traceback.format_exc()
-		frappe.response['X_ERROR_CODE'] = "03" if cstr(e) == "Invalid XML Request" else "01"
+		frappe.response['X_ERROR_CODE'] = "03" if "XML Request" in cstr(e) else "01"
 		frappe.response['X_ERROR_DESC'] = cstr(e)
 		return build_response("xml")
