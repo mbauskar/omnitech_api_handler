@@ -39,6 +39,11 @@ def validate_url():
 
 def validate_mandatory_field(req_params):
     data = req_params
+    # check missing fields
+    missing_fields = [field for field in mandatory_fields.get(frappe.local.form_dict.cmd) if field not in data.keys()]
+    if missing_fields:
+        frappe.throw(_("XML Request is missing following field(s): {0}").format(",".join(missing_fields)))
+    # check mandatory fields
     for key in mandatory_fields.get(frappe.local.form_dict.cmd):
         if not data.get(key):
             frappe.throw(_("{0} field is mandatory").format(key))
