@@ -20,7 +20,7 @@ def get_json(data):
 def pass_request_to_client_esb(doc, method):
     from suds.client import Client
     url = "file:///home/makarand/Desktop/Projects/omnitech/CRM_ACCEPTANCE_MSGService.wsdl"
-    client = Client(url)
+    client = Client(url, cache=None)
 
     # Request and response data
     logged_request = json.loads(doc.request_parameters)

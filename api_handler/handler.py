@@ -14,7 +14,7 @@ def handle():
 		frappe.response['X_ERROR_CODE'] = "02"
 		frappe.response['X_ERROR_DESC'] = "S"
 		response = build_response("xml")
-		create_scheduler_task(frappe.local.form_dict.cmd, frappe.local.form_dict.data)
+		# create_scheduler_task(frappe.local.form_dict.cmd, frappe.local.form_dict.data)
 		return response
 	except Exception, e:
 		import traceback
