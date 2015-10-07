@@ -10,6 +10,7 @@ from rest_api_methods import create_customer, delete_customer, create_service, \
 
 def execute_scheduler_methods():
     execute_web_serices()
+    complete_request_logs()
 
 def execute_web_serices():
     data = frappe.db.sql(''' select * from `tabScheduler Task`
@@ -34,3 +35,10 @@ def update_status_of_method(name):
     obj = frappe.get_doc('Scheduler Task', name)
     obj.task_status = 'Completed'
     obj.save(ignore_permissions=True)
+
+def complete_request_logs():
+    logs = frappe.db.get_values("Request Log",{"status":"Not Completed"},"name")
+
+    for dn in logs:
+        doc = frappe.get_doc("Request Log",dn)
+        doc.save(ignore_permissions=True)
