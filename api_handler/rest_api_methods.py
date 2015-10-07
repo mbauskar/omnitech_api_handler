@@ -5,6 +5,7 @@ import frappe.utils
 from frappe.utils import cstr, flt, getdate, comma_and, cint
 from frappe import _
 from api_handler.doctype.request_log.create_log import request_log, get_json
+import traceback
 import json
 
 class CommandFailedError(Exception):
@@ -27,11 +28,12 @@ def create_customer(data):
         }
         request_log('create_customer',json.dumps(response) , data)
     except Exception, e:
+		error = "%s\n%s"%(e, traceback.format_exc())
         response = {
             "P_RETURN_CODE":"01",
             "P_RETURN_DESC":str(e)
         }
-        request_log('create_customer',json.dumps(response) , data)
+        request_log('create_customer',json.dumps(response) , data, error)
 
 def create_contact(obj, args):
     contact = frappe.new_doc('Contact')
@@ -59,11 +61,12 @@ def create_service(args):
 	# 	else:
 	# 		frappe.throw("Requested site (%s) already exist"%(args.get("P_USER_NAME")))
 	# except Exception, e:
+	# 	error = "%s\n%s"%(e, traceback.format_exc())
 	# 	response = {
 	# 	    "P_RETURN_CODE":"01",
 	# 	    "P_RETURN_DESC":str(e)
 	# 	}
-	# 	request_log('create_service',json.dumps(response) , args)
+	# 	request_log('create_service',json.dumps(response) , args, error)
 	pass
 
 def disconnect_service(args):
@@ -83,11 +86,12 @@ def disconnect_service(args):
 	# 	else:
 	# 		frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
 	# except Exception, e:
+	# 	error = "%s\n%s"%(e, traceback.format_exc())
 	# 	response = {
 	# 	    "P_RETURN_CODE":"01",
 	# 	    "P_RETURN_DESC":str(e)
 	# 	}
-	# 	request_log('disconnect_service',json.dumps(response) , args)
+	# 	request_log('disconnect_service',json.dumps(response) , args, error)
 	pass
 
 def restart_service(args):
@@ -107,11 +111,12 @@ def restart_service(args):
 	# 	else:
 	# 		frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
 	# except Exception, e:
+	# 	error = "%s\n%s"%(e, traceback.format_exc())
 	# 	response = {
 	# 	    "P_RETURN_CODE":"01",
 	# 	    "P_RETURN_DESC":str(e)
 	# 	}
-	# 	request_log('disconnect_service',json.dumps(response) , args)
+	# 	request_log('disconnect_service',json.dumps(response) , args, error)
 	pass
 
 def control_action(args):
@@ -143,16 +148,20 @@ def is_site_already_exists(domain):
 def create_new_site(domain_name, is_active=False):
     # TODO
 	# reload nginx and supervisor
-	new_site = "bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(get_mariadb_root_pwd(),
-	            get_default_admin_pwd(), domain_name)
-	bench_use = "bench use {0}".format(domain_name)
-	set_config = "bench set-config is_disabled {0}".format(0 if is_active else 1)
-	install_app = "bench install-app erpnext"
-	default_site = "bench use {0}".format(get_default_site())
-	nginx_setup = "bench setup nginx"
+	default_site_name = get_default_site()
+	if default_site_name:
+		new_site = "bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(get_mariadb_root_pwd(),
+		            get_default_admin_pwd(), domain_name)
+		bench_use = "bench use {0}".format(domain_name)
+		set_config = "bench set-config is_disabled {0}".format(0 if is_active else 1)
+		install_app = "bench install-app erpnext"
+		default_site = "bench use {0}".format(default_site_name)
+		nginx_setup = "bench setup nginx"
+		reload_supervisor = "sudo supervisorctl reload frappe:"
+		reload_nginx = "sudo /etc/init.d/nginx reload frappe:"
 
-	for cmd in [new_site, bench_use, set_config, install_app, default_site, nginx_setup]:
-	    exec_cmd(cmd, cwd=get_target_banch())
+		for cmd in [new_site, bench_use, set_config, install_app, default_site, nginx_setup, reload_supervisor, reload_nginx]:
+		    exec_cmd(cmd, cwd=get_target_banch())
 
 def get_mariadb_root_pwd():
     # return "password"
@@ -195,17 +204,21 @@ def update_sites_doc(domain, is_active=True):
         frappe.throw("{0} domain not found in Sites".format(domain))
 
 def configure_site(domain, is_disabled=False):
-	bench_use = "bench use {0}".format(domain)
-	set_config = "bench set-config is_disabled {0}".format(1 if is_disabled else 0)
-	default_site = "bench use {0}".format(get_default_site())
-	nginx_setup = "bench setup nginx"
+	default_site_name = get_default_site()
+	if default_site_name:
+		bench_use = "bench use {0}".format(domain)
+		set_config = "bench set-config is_disabled {0}".format(1 if is_disabled else 0)
+		default_site = "bench use {0}".format(default_site_name)
+		nginx_setup = "bench setup nginx"
+		reload_supervisor = "sudo supervisorctl reload frappe:"
+		reload_nginx = "sudo /etc/init.d/nginx reload frappe:"
 
-	for cmd in [bench_use, set_config, default_site,nginx_setup]:
-	    exec_cmd(cmd, cwd=get_target_banch())
+		for cmd in [bench_use, set_config, default_site,nginx_setup, reload_supervisor, reload_nginx]:
+		    exec_cmd(cmd, cwd=get_target_banch())
 
 def exec_cmd(cmd, cwd='.'):
 	import subprocess
-	_cmd = "echo executing - {0};{1}".format(cmd, cmd)
+	_cmd = "echo executing - {0}".format(cmd)
 	p = subprocess.Popen(_cmd, cwd=cwd, shell=True, stdout=None, stderr=None)
 	return_code = p.wait()
 	if return_code > 0:

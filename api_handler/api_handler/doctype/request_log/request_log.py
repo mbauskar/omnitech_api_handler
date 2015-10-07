@@ -5,15 +5,17 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
+import json
 
 class RequestLog(Document):
-	def validate(self):
+	def on_update(self):
 		self.pass_request_to_client_esb()
 
-	def pass_request_to_client_esb():
+	def pass_request_to_client_esb(self):
 		from suds.client import Client
 
-		url = "/assets/erpnext/erpnext/public/CRM_ACCEPTANCE_MSGService.wsdl"
+		# url = "%s/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"%(frappe.utils.get_url())
+		url = "http://localhost:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
 		client = Client(url, cache=None)
 
 		# Request and response data
@@ -41,7 +43,8 @@ class RequestLog(Document):
 			self.status = "Completed" if response.E_ERROR_CODE == "S" else "Not Completed"
 		except Exception, e:
 			import traceback
-
 			self.status = "Not Completed"
-			self.error = traceback.format_exc()
-	        self.esb_request = client.last_sent().str()
+			self.error = str(traceback.format_exc())
+			self.esb_request = "<xmp>%s</xmp>"%client.last_sent().str()
+		finally:
+			return True

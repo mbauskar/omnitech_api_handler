@@ -38,7 +38,6 @@ def update_status_of_method(name):
 
 def complete_request_logs():
     logs = frappe.db.get_values("Request Log",{"status":"Not Completed"},"name")
-
     for dn in logs:
-        doc = frappe.get_doc("Request Log",dn)
+        doc = frappe.get_doc("Request Log",dn[0])
         doc.save(ignore_permissions=True)

@@ -55,6 +55,10 @@ service_response_mapper = {
 }
 
 def json_to_xml(_json, as_str=True):
+    """
+        converts {"X_ERROR_CODE":"01","X_ERROR_DESC":"DESC"} to xml as follows
+        xml : <CreateServiceResponse><X_ERROR_CODE>01</X_ERROR_CODE><X_ERROR_DESC>DESC</X_ERROR_DESC></CreateServiceResponse>
+    """
     path = frappe.request.path[1:].split("/",2)
     cmd = ""
     if len(path) == 2:
