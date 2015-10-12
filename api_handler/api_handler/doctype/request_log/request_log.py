@@ -14,8 +14,10 @@ class RequestLog(Document):
 	def pass_request_to_client_esb(self):
 		from suds.client import Client
 
+		#TODO check the URL for wsdl
 		# url = "%s/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"%(frappe.utils.get_url())
-		url = "http://localhost:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
+		# url = "http://localhost:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
+		url = "http://84.255.152.200:8000/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
 		client = Client(url, cache=None)
 
 		# Request and response data

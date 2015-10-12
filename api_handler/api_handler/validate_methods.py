@@ -46,9 +46,11 @@ fields_and_types ={
 }
 
 def validate_and_get_json_request():
-    req_params = xml_to_json(frappe.local.form_dict.data)
-    frappe.local.form_dict.data = req_params
     validate_url()
+    xml_req = "<root>%s</root>"%(frappe.local.form_dict.data)
+    # req_params = xml_to_json(frappe.local.form_dict.data)
+    req_params = xml_to_json(xml_req)
+    frappe.local.form_dict.data = req_params
     validate_mandatory_field(req_params)
     validate_authentication_token(req_params)
     validate_request_parameters(req_params)
@@ -110,7 +112,13 @@ def validate_request_parameters(req_params):
 
     if cmd == 'create_customer':
         is_customer_already_exsits(params)
-    # elif cmd == 'delete_customer':pass
+    elif cmd == 'delete_customer':
+        # 'P_USER_NAME', 'P_ORDER_NO'
+        # check if site exsits or not ?
+        # get the customer name
+        # if site is active deactivate the site ?
+        # delete the customer
+        pass
     elif cmd == 'create_service':
         domain_name = params.get("P_USER_NAME")
         if is_domain_name_already_exsits(domain_name):

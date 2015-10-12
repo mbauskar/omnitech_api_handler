@@ -30,6 +30,14 @@ class objectJSONEncoder(simplejson.JSONEncoder):
             return o.__dict__
         return simplejson.JSONEncoder.default(self, o)
 
+service_request_mapper = {
+    "create_service": "CreateServiceRequest",
+    "create_customer": "CreateCustomerRequest",
+    "disconnect_service": "DisconnedtServiceRequest",
+    "delete_customer": "DeleteCustomerRequest",
+    "control_action": "ControlActionRequest"
+}
+
 def xml_to_json(xml, as_dict=True):
     """
         convert xml to json, if as_dict is true then return json as dict
@@ -38,12 +46,19 @@ def xml_to_json(xml, as_dict=True):
         if isinstance(xml, unicode):
             xml = objectify.fromstring(xml)
         req = objectJSONEncoder().encode(xml)
+        req = json.loads(req)
 
-        if as_dict:
-            return json.loads(req)
+        req_root_tag = service_request_mapper.get(frappe.local.form_dict.cmd)
+        if req.get(req_root_tag):
+            if as_dict:
+                return req.get(req_root_tag)
+            else:
+                return json.dumps(req.get(req_root_tag))
         else:
-            return req
+            raise Exception("Invalid XML Request")
     except Exception, e:
+        import traceback
+        print traceback.format_exc()
         frappe.throw("Invalid XML Request")
 
 service_response_mapper = {
@@ -63,7 +78,7 @@ def json_to_xml(_json, as_str=True):
     cmd = ""
     if len(path) == 2:
     	cmd = path[1]
-        root = etree.Element(service_response_mapper.get(cmd))
+        root = etree.Element(service_response_mapper.get(cmd) or "ServiceResponse")
         root.extend([E.X_ERROR_CODE(_json.X_ERROR_CODE),
                     E.X_ERROR_DESC(_json.X_ERROR_DESC)])
         return etree.tostring(root)

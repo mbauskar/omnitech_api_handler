@@ -12,7 +12,6 @@ class CommandFailedError(Exception):
 	pass
 
 def create_customer(data):
-	# TODO Save circuit number
 	try:
 	    data = get_json(data)
 	    customer = frappe.new_doc('Customer')
@@ -38,7 +37,7 @@ def create_customer(data):
 def create_contact(obj, args):
     contact = frappe.new_doc('Contact')
     contact.first_name = obj.customer_name
-    contact.email_id = args.get('P_USER_NAME')
+    contact.email_id = args.get('P_EMAIL')
     contact.phone = args.get('P_CONTACT_NO')
     contact.customer = obj.name
     contact.save(ignore_permissions=True)
@@ -47,77 +46,75 @@ def delete_customer(args):
     pass
 
 def create_service(args):
-	# create new doc of type Sites
-	# try:
-	# 	if isinstance(args, unicode): args = get_json(args)
-	# 	if not is_site_already_exists(args.get("P_USER_NAME")):
-	# 		create_new_site(args.get("P_USER_NAME"), is_active=True)
-	# 		create_sites_doc(args)
-	# 		response = {
-	# 		    "P_RETURN_CODE":"02",
-	# 		    "P_RETURN_DESC":"Success"
-	# 		}
-	# 		request_log('create_service',json.dumps(response) , args)
-	# 	else:
-	# 		frappe.throw("Requested site (%s) already exist"%(args.get("P_USER_NAME")))
-	# except Exception, e:
-	# 	error = "%s\n%s"%(e, traceback.format_exc())
-	# 	response = {
-	# 	    "P_RETURN_CODE":"01",
-	# 	    "P_RETURN_DESC":str(e)
-	# 	}
-	# 	request_log('create_service',json.dumps(response) , args, error)
-	pass
+	"""Create New Site"""
+	try:
+		if isinstance(args, unicode): args = get_json(args)
+		if not is_site_already_exists(args.get("P_USER_NAME")):
+			create_new_site(args.get("P_USER_NAME"), is_active=True)
+			create_sites_doc(args)
+			update_customer_package_details(args, is_active=True)
+			response = {
+			    "P_RETURN_CODE":"02",
+			    "P_RETURN_DESC":"Success"
+			}
+			request_log('create_service',json.dumps(response) , args)
+		else:
+			frappe.throw("Requested site (%s) already exist"%(args.get("P_USER_NAME")))
+	except Exception, e:
+		error = "%s\n%s"%(e, traceback.format_exc())
+		response = {
+		    "P_RETURN_CODE":"01",
+		    "P_RETURN_DESC":str(e)
+		}
+		request_log('create_service',json.dumps(response) , args, error)
 
 def disconnect_service(args):
-	# try:
-	# 	if isinstance(args, unicode): args = get_json(args)
-	# 	if is_site_already_exists(args.get("P_USER_NAME")):
-	# 		if not frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
-	# 			configure_site(args.get("P_USER_NAME"), is_disabled=True)
-	# 			update_sites_doc(args.get("P_USER_NAME"), is_active=False)
-	# 			response = {
-	# 			    "P_RETURN_CODE":"02",
-	# 			    "P_RETURN_DESC":"Success"
-	# 			}
-	# 			request_log('disconnect_service',json.dumps(response) , args)
-	# 		else:
-	# 			frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
-	# 	else:
-	# 		frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
-	# except Exception, e:
-	# 	error = "%s\n%s"%(e, traceback.format_exc())
-	# 	response = {
-	# 	    "P_RETURN_CODE":"01",
-	# 	    "P_RETURN_DESC":str(e)
-	# 	}
-	# 	request_log('disconnect_service',json.dumps(response) , args, error)
-	pass
+	try:
+		if isinstance(args, unicode): args = get_json(args)
+		if is_site_already_exists(args.get("P_USER_NAME")):
+			if not frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
+				configure_site(args.get("P_USER_NAME"), is_disabled=True)
+				update_sites_doc(args.get("P_USER_NAME"), is_active=False)
+				response = {
+				    "P_RETURN_CODE":"02",
+				    "P_RETURN_DESC":"Success"
+				}
+				request_log('disconnect_service',json.dumps(response) , args)
+			else:
+				frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
+		else:
+			frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
+	except Exception, e:
+		error = "%s\n%s"%(e, traceback.format_exc())
+		response = {
+		    "P_RETURN_CODE":"01",
+		    "P_RETURN_DESC":str(e)
+		}
+		request_log('disconnect_service',json.dumps(response) , args, error)
 
 def restart_service(args):
-	# try:
-	# 	if isinstance(args, unicode): args = get_json(args)
-	# 	if is_site_already_exists(args.get("P_USER_NAME")):
-	# 		if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
-	# 			configure_site(args.get("P_USER_NAME"), is_disabled=False)
-	# 			update_sites_doc(args.get("P_USER_NAME"), is_active=True)
-	# 			response = {
-	# 			    "P_RETURN_CODE":"02",
-	# 			    "P_RETURN_DESC":"Success"
-	# 			}
-	# 			request_log('disconnect_service',json.dumps(response) , args)
-	# 		else:
-	# 			frappe.throw("Requested site (%s) is already active"%(args.get("P_USER_NAME")))
-	# 	else:
-	# 		frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
-	# except Exception, e:
-	# 	error = "%s\n%s"%(e, traceback.format_exc())
-	# 	response = {
-	# 	    "P_RETURN_CODE":"01",
-	# 	    "P_RETURN_DESC":str(e)
-	# 	}
-	# 	request_log('disconnect_service',json.dumps(response) , args, error)
-	pass
+	try:
+		if isinstance(args, unicode): args = get_json(args)
+		if is_site_already_exists(args.get("P_USER_NAME")):
+			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
+				configure_site(args.get("P_USER_NAME"), is_disabled=False)
+				update_sites_doc(args.get("P_USER_NAME"), is_active=True)
+				response = {
+				    "P_RETURN_CODE":"02",
+				    "P_RETURN_DESC":"Success"
+				}
+				request_log('disconnect_service',json.dumps(response) , args)
+			else:
+				frappe.throw("Requested site (%s) is already active"%(args.get("P_USER_NAME")))
+		else:
+			frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
+	except Exception, e:
+		error = "%s\n%s"%(e, traceback.format_exc())
+		response = {
+		    "P_RETURN_CODE":"01",
+		    "P_RETURN_DESC":str(e)
+		}
+		request_log('disconnect_service',json.dumps(response) , args, error)
 
 def control_action(args):
 	args = get_json(args)
@@ -219,3 +216,7 @@ def exec_cmd(cmd, cwd='.'):
 	return_code = p.wait()
 	if return_code > 0:
 		raise CommandFailedError(cmd)
+
+def update_customer_package_details(args, is_active=False):
+	"""Update the package details in customer doctype"""
+	pass
