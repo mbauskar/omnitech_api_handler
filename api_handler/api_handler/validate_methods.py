@@ -57,7 +57,8 @@ def validate_and_get_json_request():
 
 def validate_url():
 	path = frappe.request.path[1:].split("/",2)
-	if len(path) == 2:
+    # path[1] in services_fields.keys() <= check if url is correct
+	if len(path) == 2 and path[1] in services_fields.keys():
 		frappe.local.form_dict.cmd = path[1]
 	else:
 		frappe.throw(_("Invalid URL"))
@@ -107,7 +108,7 @@ def validate_request_parameters(req_params):
     cmd = frappe.local.form_dict.cmd
 
     if is_request_already_exists(cmd, params):
-		err_msg = "Ignoring Request as the same request is already exists in scheduler queue"
+		err_msg = "Ignoring Request as the similer request is already exists in scheduler queue"
 		raise Exception(err_msg)
 
     if cmd == 'create_customer':
