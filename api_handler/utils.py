@@ -61,13 +61,13 @@ def xml_to_json(xml, as_dict=True):
         print traceback.format_exc()
         frappe.throw("Invalid XML Request")
 
-service_response_mapper = {
-    "create_service": "CreateServiceResponse",
-    "create_customer": "CreateCustomerResponse",
-    "disconnect_service": "DisconnedtServiceResponse",
-    "delete_customer": "DeleteCustomerResponse",
-    "control_action": "ControlActionResponse"
-}
+# service_response_mapper = {
+#     "create_service": "CreateServiceResponse",
+#     "create_customer": "CreateCustomerResponse",
+#     "disconnect_service": "DisconnedtServiceResponse",
+#     "delete_customer": "DeleteCustomerResponse",
+#     "control_action": "ControlActionResponse"
+# }
 
 def json_to_xml(_json, as_str=True):
     """
@@ -79,7 +79,8 @@ def json_to_xml(_json, as_str=True):
     cmd = ""
     if len(path) == 2:
     	cmd = path[1]
-        root = etree.Element(service_response_mapper.get(cmd) or "ServiceResponse")
+        # root = etree.Element(service_response_mapper.get(cmd) or "ServiceResponse")
+        root = etree.Element("ServiceResponse")
         root.extend([E.X_ERROR_CODE(_json.X_ERROR_CODE),
                     E.X_ERROR_DESC(_json.X_ERROR_DESC)])
         return etree.tostring(root)
