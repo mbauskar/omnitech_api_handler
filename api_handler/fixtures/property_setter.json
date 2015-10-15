@@ -921,5 +921,57 @@
   "property": "previous_field", 
   "property_type": "Data", 
   "value": "mariadb_password"
+ }, 
+ {
+  "default_value": null, 
+  "doc_type": "Customer", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "cb0", 
+  "modified": "2015-10-15 16:29:44.522804", 
+  "name": "Customer-cb0-previous_field", 
+  "property": "previous_field", 
+  "property_type": "Data", 
+  "value": "domain_name"
+ }, 
+ {
+  "default_value": null, 
+  "doc_type": "Customer", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "other_details", 
+  "modified": "2015-10-15 16:32:06.509486", 
+  "name": "Customer-other_details-previous_field", 
+  "property": "previous_field", 
+  "property_type": "Data", 
+  "value": "package_transction"
+ }, 
+ {
+  "default_value": null, 
+  "doc_type": "Customer", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "domain_name", 
+  "modified": "2015-10-15 16:32:16.082216", 
+  "name": "Customer-domain_name-previous_field", 
+  "property": "previous_field", 
+  "property_type": "Data", 
+  "value": "other_details"
+ }, 
+ {
+  "default_value": null, 
+  "doc_type": "Customer", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "is_active", 
+  "modified": "2015-10-15 16:32:37.563164", 
+  "name": "Customer-is_active-previous_field", 
+  "property": "previous_field", 
+  "property_type": "Data", 
+  "value": "cb0"
  }
 ]
