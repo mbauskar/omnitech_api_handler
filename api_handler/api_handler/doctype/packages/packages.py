@@ -20,7 +20,7 @@ class Packages(Document):
 		elif _max < _min:
 			frappe.throw("Maximum number of user should be greater than Minimum Number of users")
 
-def package_as_json(package_id="ERP-BASIC"):
+def package_as_json(package_id):
 	pkg = frappe.get_doc("Packages", package_id)
 	if not pkg:
 		frappe.throw("Invalid Package ID")
