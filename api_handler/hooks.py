@@ -74,7 +74,8 @@ doc_events = {
 	"Global Defaults": {
 		"on_update": [
 			"api_handler.api_handler.validate_methods.validate_bench_path",
-			"api_handler.api_handler.validate_methods.validate_token_before_save"
+			"api_handler.api_handler.validate_methods.validate_token_before_save",
+			"api_handler.api_handler.validate_methods.validate_default_domain"
 		],
 	}
 }
@@ -100,7 +101,7 @@ scheduler_events = {
 	# ]
 }
 
-fixtures = ["Custom Field"]
+fixtures = ["Custom Field","Property Setter"]
 
 # Testing
 # -------

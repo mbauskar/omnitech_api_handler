@@ -928,19 +928,6 @@
   "docstatus": 0, 
   "doctype": "Property Setter", 
   "doctype_or_field": "DocField", 
-  "field_name": "cb0", 
-  "modified": "2015-10-15 16:29:44.522804", 
-  "name": "Customer-cb0-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "domain_name"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Customer", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
   "field_name": "other_details", 
   "modified": "2015-10-15 16:32:06.509486", 
   "name": "Customer-other_details-previous_field", 
@@ -973,5 +960,31 @@
   "property": "previous_field", 
   "property_type": "Data", 
   "value": "cb0"
+ }, 
+ {
+  "default_value": null, 
+  "doc_type": "Customer", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "cpr_cr", 
+  "modified": "2015-10-15 16:40:01.538116", 
+  "name": "Customer-cpr_cr-previous_field", 
+  "property": "previous_field", 
+  "property_type": "Data", 
+  "value": "domain_name"
+ }, 
+ {
+  "default_value": null, 
+  "doc_type": "Customer", 
+  "docstatus": 0, 
+  "doctype": "Property Setter", 
+  "doctype_or_field": "DocField", 
+  "field_name": "cb0", 
+  "modified": "2015-10-15 16:40:20.777661", 
+  "name": "Customer-cb0-previous_field", 
+  "property": "previous_field", 
+  "property_type": "Data", 
+  "value": "cpr_cr"
  }
 ]

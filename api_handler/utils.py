@@ -1,7 +1,7 @@
 """
 makarand
-TODO:   1: xml_to_json
-        2: json_to_xml
+1: xml_to_json
+2: json_to_xml
 """
 
 import json
@@ -61,28 +61,47 @@ def xml_to_json(xml, as_dict=True):
         print traceback.format_exc()
         frappe.throw("Invalid XML Request")
 
-# service_response_mapper = {
-#     "create_service": "CreateServiceResponse",
-#     "create_customer": "CreateCustomerResponse",
-#     "disconnect_service": "DisconnedtServiceResponse",
-#     "delete_customer": "DeleteCustomerResponse",
-#     "control_action": "ControlActionResponse"
-# }
+service_response_mapper = {
+    "create_service": "CreateServiceResponse",
+    "create_customer": "CreateCustomerResponse",
+    "disconnect_service": "DisconnedtServiceResponse",
+    "delete_customer": "DeleteCustomerResponse",
+    "control_action": "ControlActionResponse"
+}
 
 def json_to_xml(_json, as_str=True):
     """
         converts {"X_ERROR_CODE":"01","X_ERROR_DESC":"DESC"} to xml as follows
         xml : <CreateServiceResponse><X_ERROR_CODE>01</X_ERROR_CODE><X_ERROR_DESC>DESC</X_ERROR_DESC></CreateServiceResponse>
     """
-    # TODO remove url validation
     path = frappe.request.path[1:].split("/",2)
-    cmd = ""
     if len(path) == 2:
-    	cmd = path[1]
-        # root = etree.Element(service_response_mapper.get(cmd) or "ServiceResponse")
-        root = etree.Element("ServiceResponse")
+        cmd = path[1]
+        root = etree.Element(service_response_mapper.get(cmd) or "ServiceResponse")
+        # root = etree.Element("ServiceResponse")
         root.extend([E.X_ERROR_CODE(_json.X_ERROR_CODE),
                     E.X_ERROR_DESC(_json.X_ERROR_DESC)])
         return etree.tostring(root)
     else:
-    	frappe.throw(_("Invalid URL"))
+        raise Exception("Invalid URL")
+
+def send_mail(args, subject, template):
+    """send mail to user"""
+    from frappe.utils.user import get_user_fullname
+    from frappe.utils import get_url
+    try:
+        args.update({
+            'title': "Omnitech ERPNext-Service Update Notification"
+        })
+
+        # sender = frappe.session.user not in STANDARD_USERS and frappe.session.user or None
+        # sender = "Administrator"
+        sender = None
+
+        frappe.sendmail(recipients=args.get("email"), sender=sender, subject=subject,
+            message=frappe.get_template(template).render(args))
+        return True
+    except Exception, e:
+        import traceback
+        print "notify", traceback.format_exc()
+        return False

@@ -6,13 +6,15 @@ from frappe.utils import cstr, flt, getdate, comma_and, cint
 from frappe import _
 
 def request_log(method, response, request_data, error=None):
-    req_log = frappe.new_doc('Request Log')
-    req_log.request_key = request_data.get('P_TRXN_NO')
-    req_log.request = method
-    req_log.request_parameters = json.dumps(request_data)
-    req_log.response = response
-    req_log.error = error
-    req_log.save(ignore_permissions=True)
+	print "in request_log"
+	if isinstance(request_data, unicode): request_data = json.loads(request_data)
+	req_log = frappe.new_doc('Request Log')
+	req_log.request_key = request_data.get('P_TRXN_NO')
+	req_log.request = method
+	req_log.request_parameters = json.dumps(request_data)
+	req_log.response = response
+	req_log.error = error
+	req_log.save(ignore_permissions=True)
 
 def get_json(data):
     return json.loads(data)

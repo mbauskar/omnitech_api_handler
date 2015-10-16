@@ -5,10 +5,10 @@ import frappe.utils
 from frappe.utils import cstr, flt, getdate, comma_and, cint
 from frappe import _
 from api_handler.doctype.request_log.create_log import request_log, get_json
+from api_handler.validate_methods import get_full_domain
+from utils import send_mail
 import traceback
 import json
-
-# TODO package validation before creating site
 
 class CommandFailedError(Exception):
 	pass
@@ -16,25 +16,27 @@ class CommandFailedError(Exception):
 def create_customer(data):
 	try:
 	    data = get_json(data)
+	    
+	    # Create new customecreate_new_siter document
 	    customer = frappe.new_doc('Customer')
 	    customer.customer_name = data.get('P_CUST_NAME')
 	    customer.customer_type = 'Company'
 	    customer.customer_group = 'Commercial'
 	    customer.territory = 'All Territories'
+	    customer.cpr_cr = data.get("P_CPR_CR")
+	    customer.is_active = 0
+	    customer.domain_name = data.get("P_USER_NAME")
 	    customer.save(ignore_permissions=True)
+	    # create new contact
 	    create_contact(customer, data)
-	    response = {
-	        "P_RETURN_CODE":"02",
-	        "P_RETURN_DESC":"Success"
-	    }
-	    request_log('create_customer',json.dumps(response) , data)
+	    # create new site {deactivated}
+	    admin_pwd = create_new_site(data, customer.name)
+	    notify_user("create_customer", data, password=admin_pwd)
+	    create_request_log("02", "Success", "create_customer", data)
 	except Exception, e:
+		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
-		response = {
-		    "P_RETURN_CODE":"01",
-		    "P_RETURN_DESC":str(e)
-		}
-		request_log('create_customer',json.dumps(response) , data, error)
+		create_request_log("01", str(e), "create_customer", data, error)
 
 def create_contact(obj, args):
     contact = frappe.new_doc('Contact')
@@ -45,78 +47,94 @@ def create_contact(obj, args):
     contact.save(ignore_permissions=True)
 
 def delete_customer(args):
-    pass
+    # 'P_USER_NAME', 'P_ORDER_NO'
+    # check if site exsits or not ?
+    # get the customer name
+    # if site is active deactivate the site ?
+    # delete the customer
+	try:
+		args = get_json(args)
+		domain_name = args.get("P_USER_NAME")
+		site = frappe.get_doc("Sites", domain_name)
+		if site.customer:
+			if not site.is_active:
+				# delete customer and site
+				frappe.delete_doc("Sites", site.name, ignore_permissions=True)
+				frappe.delete_doc("Customer", site.customer, ignore_permissions=True)
+
+				# drop-site
+				cmd = "bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name)
+				exec_cmd(cmd, cwd=get_target_banch())
+				create_request_log("02", "Success", "delete_customer", args)
+			else:
+				raise Exception("Can not delete the Customer as customer has a active site : %s"%(site.name))
+		else:
+			raise Exception("Unable to find site customer, Please contact Administrator")
+	except Exception, e:
+		import traceback
+		print traceback.format_exc()
+		frappe.db.rollback()
+		error = "%s\n%s"%(e, traceback.format_exc())
+		create_request_log("01", str(e), "delete_customer", args, error)
 
 def create_service(args):
-	"""Create New Site"""
+	"""Activate newly created service"""
+	# update customer master - is_active and CPR CR, current package id
 	try:
 		if isinstance(args, unicode): args = get_json(args)
-		if not is_site_already_exists(args.get("P_USER_NAME")):
-			create_new_site(args.get("P_USER_NAME"), args.get("P_AUTHENTICATE"), is_active=True)
-			create_sites_doc(args)
-			update_customer_package_details(args, is_active=True)
-			response = {
-			    "P_RETURN_CODE":"02",
-			    "P_RETURN_DESC":"Success"
-			}
-			request_log('create_service',json.dumps(response) , args)
+		if is_site_already_exists(args.get("P_USER_NAME")):
+			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
+				update_client_instance_package_details(args, is_active=True)
+			else:
+				configure_site(args.get("P_USER_NAME"), is_disabled=False)
+				update_sites_doc(args.get("P_USER_NAME"), is_active=True)
+				update_client_instance_package_details(args, is_active=True)
+			update_customer_package_details(args)
+			create_request_log("02", "Success", "create_service", args)
 		else:
-			frappe.throw("Requested site (%s) already exist"%(args.get("P_USER_NAME")))
+			raise Exception("Requested site (%s) does not exist"%(args.get("P_USER_NAME")))
 	except Exception, e:
 		error = "%s\n%s"%(e, traceback.format_exc())
-		response = {
-		    "P_RETURN_CODE":"01",
-		    "P_RETURN_DESC":str(e)
-		}
-		request_log('create_service',json.dumps(response) , args, error)
+		create_request_log("01", str(e), "create_service", args, error)
 
 def disconnect_service(args):
+	# update customer master, is_active
 	try:
 		if isinstance(args, unicode): args = get_json(args)
 		if is_site_already_exists(args.get("P_USER_NAME")):
 			if not frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
 				configure_site(args.get("P_USER_NAME"), is_disabled=True)
 				update_sites_doc(args.get("P_USER_NAME"), is_active=False)
-				response = {
-				    "P_RETURN_CODE":"02",
-				    "P_RETURN_DESC":"Success"
-				}
-				request_log('disconnect_service',json.dumps(response) , args)
+				update_customer_domain_details(args.get("P_USER_NAME"), is_active=False)
+				create_request_log("02", "Success", "disconnect_service", args)
 			else:
 				frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
 		else:
 			frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
 	except Exception, e:
+		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
-		response = {
-		    "P_RETURN_CODE":"01",
-		    "P_RETURN_DESC":str(e)
-		}
-		request_log('disconnect_service',json.dumps(response) , args, error)
+		create_request_log("01", str(e), "disconnect_service", args, error)
 
 def restart_service(args):
+	# update customer master, is_active
+	domain = args.get("P_USER_NAME")
 	try:
 		if isinstance(args, unicode): args = get_json(args)
-		if is_site_already_exists(args.get("P_USER_NAME")):
-			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
-				configure_site(args.get("P_USER_NAME"), is_disabled=False)
-				update_sites_doc(args.get("P_USER_NAME"), is_active=True)
-				response = {
-				    "P_RETURN_CODE":"02",
-				    "P_RETURN_DESC":"Success"
-				}
-				request_log('disconnect_service',json.dumps(response) , args)
+		if is_site_already_exists(domain):
+			if frappe.db.get_value("Sites", domain, "is_active"):
+				configure_site(domain, is_disabled=False)
+				update_sites_doc(domain, is_active=True)
+				update_customer_domain_details(domain, is_active=True)
+				create_request_log("02", "Success", "restart_service", args)
 			else:
-				frappe.throw("Requested site (%s) is already active"%(args.get("P_USER_NAME")))
+				frappe.throw("Requested site (%s) is already active"%(domain))
 		else:
-			frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
+			frappe.throw("Requested site (%s) does not exists"%(domain))
 	except Exception, e:
+		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
-		response = {
-		    "P_RETURN_CODE":"01",
-		    "P_RETURN_DESC":str(e)
-		}
-		request_log('disconnect_service',json.dumps(response) , args, error)
+		create_request_log("01", str(e), "restart_service", args, error)
 
 def control_action(args):
 	args = get_json(args)
@@ -125,57 +143,51 @@ def control_action(args):
 	else:
 		restart_service(args)
 
-def create_sites_doc(args):
-    doc = {
-        "doctype":"Sites",
-        "transaction_number": args.get("P_TRXN_NO"),
-        "domain": args.get("P_USER_NAME"),
-        "is_active":1,
-        "cpr_cr": args.get("P_CPR_CR"),
-        "package_id": args.get("P_PACKAGE_ID"),
-        "order_number":args.get("P_ORDER_NO")
-    }
-    site = frappe.get_doc(doc)
-    site.ignore_permissions = True
-    site.save()
+def create_new_site(args, customer):
+	"""Create new site, create site doc"""
+	if isinstance(args, unicode): args = get_json(args)
+	if not is_site_already_exists(args.get("P_USER_NAME")):
+		pwd = generate_random_password()
+		create_site(args.get("P_USER_NAME"), args.get("P_AUTHENTICATE"), pwd, is_active=False)
+		create_sites_doc(args, customer, pwd)
+		return pwd
+	else:
+		raise Exception("Requested site (%s) already exist"%(args.get("P_USER_NAME")))
+
+def create_sites_doc(args, customer, pwd):
+	site = frappe.new_doc("Sites")
+	site.transaction_number = args.get("P_TRXN_NO")
+	site.domain = args.get("P_USER_NAME")
+	site.is_active = 0
+	site.cpr_cr = args.get("P_CPR_CR") or "NA"
+	site.package_id = args.get("P_PACKAGE_ID") or "NA"
+	site.order_number = args.get("P_ORDER_NO") or "NA"
+	site.customer = customer
+	site.admin_password = pwd
+	site.save(ignore_permissions=True)
 
 def is_site_already_exists(domain):
-	site = frappe.get_doc("Sites", domain)
-	result = True if site else False
-	return result
+	if frappe.db.get_value("Sites", domain, "domain"):
+		return True
+	else:
+		return False
 
-def create_new_site(domain_name, auth_token, is_active=False):
-    # TODO
-	# reload nginx and supervisor
-	cmds = [
+def create_site(domain_name, auth_token, pwd, is_active=False):
+  	cmds = [
 		"bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(
-			get_mariadb_root_pwd(),get_default_admin_pwd(), domain_name
+			get_mariadb_root_pwd(), pwd, domain_name
 		),
 		"bench use {0}".format(domain_name),
 		"bench set-config is_disabled {0}".format(0 if is_active else 1),
 		"bench set-config auth_token {0}".format(get_encrypted_token(auth_token)),
 		"bench install-app erpnext",
 		"bench use {0}".format(get_default_site()),
-		"bench setup nginx",
-		"sudo supervisorctl reload frappe:",
-		"sudo /etc/init.d/nginx reload frappe:"
 	]
-	# new_site = "bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(get_mariadb_root_pwd(),
-	#             get_default_admin_pwd(), domain_name)
-	# bench_use = "bench use {0}".format(domain_name)
-	# set_config = "bench set-config is_disabled {0}".format(0 if is_active else 1)
-	# install_app = "bench install-app erpnext"
-	# default_site = "bench use {0}".format(get_default_site())
-	# nginx_setup = "bench setup nginx"
-	# reload_supervisor = "sudo supervisorctl reload frappe:"
-	# reload_nginx = "sudo /etc/init.d/nginx reload frappe:"
 
-	# for cmd in [new_site, bench_use, set_config, install_app, default_site, nginx_setup, reload_supervisor, reload_nginx]:
 	for cmd in cmds:
-	    exec_cmd(cmd, cwd=get_target_banch())
+		exec_cmd(cmd, cwd=get_target_banch())
 
 def get_mariadb_root_pwd():
-    # return "password"
 	db_pwd = frappe.db.get_value("Global Defaults","Global Defaults", "mariadb_password")
 	if db_pwd:
 		return db_pwd
@@ -183,20 +195,18 @@ def get_mariadb_root_pwd():
 		frappe.throw("MariaDB is not configured, Please contact Administrator")
 
 def get_default_site():
-	# return "www.test.com"
 	default_site = frappe.db.get_value("Global Defaults","Global Defaults", "default_site")
 	if default_site:
 		return default_site
 	else:
 		frappe.throw("Default Site is not configured, Please contact Administrator")
 
-def get_default_admin_pwd():
-    # return "admin"
-	default_pwd = frappe.db.get_value("Global Defaults","Global Defaults", "default_password")
-	if default_pwd:
-		return default_pwd
-	else:
-		frappe.throw("Site Details are not Configured, Please Contact Administrator")
+# def get_default_admin_pwd():
+# 	default_pwd = frappe.db.get_value("Global Defaults","Global Defaults", "default_password")
+# 	if default_pwd:
+# 		return default_pwd
+# 	else:
+# 		frappe.throw("Site Details are not Configured, Please Contact Administrator")
 
 def get_target_banch():
 	path = frappe.db.get_value("Global Defaults","Global Defaults", "path")
@@ -215,13 +225,6 @@ def update_sites_doc(domain, is_active=True):
         frappe.throw("{0} domain not found in Sites".format(domain))
 
 def configure_site(domain, is_disabled=False):
-	# bench_use = "bench use {0}".format(domain)
-	# set_config = "bench set-config is_disabled {0}".format(1 if is_disabled else 0)
-	# default_site = "bench use {0}".format(get_default_site())
-	# nginx_setup = "bench setup nginx"
-	# reload_supervisor = "sudo supervisorctl reload frappe:"
-	# reload_nginx = "sudo /etc/init.d/nginx reload frappe:"
-
 	cmds = [
 		"bench use {0}".format(domain),
 		"bench set-config is_disabled {0}".format(1 if is_disabled else 0),
@@ -231,14 +234,14 @@ def configure_site(domain, is_disabled=False):
 		"sudo /etc/init.d/nginx reload frappe:"
 	]
 
-	# for cmd in [bench_use, set_config, default_site,nginx_setup, reload_supervisor, reload_nginx]:
 	for cmd in cmds:
 	    exec_cmd(cmd, cwd=get_target_banch())
 
 def exec_cmd(cmd, cwd='.'):
 	import subprocess
-	_cmd = "echo executing - {0}".format(cmd)
-	p = subprocess.Popen(_cmd, cwd=cwd, shell=True, stdout=None, stderr=None)
+	# TODO remove print
+	print "executing - {0}".format(cmd)
+	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=None, stderr=None)
 	return_code = p.wait()
 	if return_code > 0:
 		raise CommandFailedError(cmd)
@@ -253,24 +256,105 @@ def get_encrypted_token(auth_token=None):
 	encrypted_token = hashlib.sha1(auth_token).hexdigest()[:10]
 	return encrypted_token
 
-def update_customer_package_details(args, is_active=False):
+def update_customer_package_details(args):
+	"""add/update entry in customer package transaction details"""
+	def append_row(doc, transaction_number, package_id):
+		"""Append New Child Table Row"""
+		ch = doc.append('package_transaction', {})
+		ch.transaction_number = transaction_number
+		ch.package_id = package_id
+		ch.description = frape.db.get_value("Packages", package_id, "description") or "NA"
+		doc.save(ignore_permissions=True)
+
+	transaction_number = args.get("P_TRXN_NO")
+	package_id = args.get("P_PACKAGE_ID")
+	desc = args.get("P_DESC") or "NA"
+
+	customer = frappe.db.get_value("Sites", args.get("P_USER_NAME"), "customer")
+	doc = frappe.get_doc("Customer", customer)
+
+	# check if customer has a child table entry if not create new
+	if not doc:
+		raise Exception("Customer Not Found, Please contact Administrator")
+
+	if not doc.package_transaction:
+		append_row(doc, transaction_number, package_id)
+	else:
+		# check if package number from the child table and in request are same or not
+		if doc.current_package != package_id:
+			append_row(doc, transaction_number, package_id)
+
+	update_customer_domain_details(args.get("P_USER_NAME"), is_active=True, package_id=package_id)
+
+def update_customer_domain_details(domain, is_active=False, package_id=None, cpr_cr=None):
+	customer = frappe.db.get_value("Sites", domain, customer)
+	doc = frappe.get_doc("Customer", customer)
+	doc.is_active = 1 if is_active else 0
+
+	if package_id: doc.current_package = package_id
+	if cpr_cr: doc.cpr_cr = cpr_cr
+
+	doc.save(ignore_permissions=True)
+
+def update_client_instance_package_details(args):
 	"""Update the package details in customer doctype"""
 	import requests
-	from omnitechapp.omnitechapp.doctype.packages import package_as_json
+	from api_handler.api_handler.doctype.packages import package_as_json
 
-	token = get_encrypted_token(args.get("P_AUTHENTICATE"))
-	pkg = json.loads(package_as_json(args.get("P_PACKAGE_ID")))
-	# TODO subdomain.domain.com
-	url = "{0}/omniClient/setUserPackage".format("http://localhost:9888")
-	headers = { "content-type":"application/x-www-form-urlencoded" }
-	params = {
-		"P_AUTHENTICATE":token,
-		"P_MIN_USERS":pkg.get("minimum_users"),
-		"P_MAX_USERS":pkg.get("maximum_users"),
-		"P_DESC":pkg.get("description"),
-		"P_MODULES":pkg.get("allowed_module"),
-		"P_PACKAGE_ID":pkg.get("package_id")
+	try:
+		token = get_encrypted_token(args.get("P_AUTHENTICATE"))
+		pkg = json.loads(package_as_json(args.get("P_PACKAGE_ID")))
+		url = "{0}/omniClient/setUserPackage".format(args.get("P_USER_NAME"))
+		headers = { "content-type":"application/x-www-form-urlencoded" }
+		params = {
+			"P_AUTHENTICATE":token,
+			"P_MIN_USERS":pkg.get("minimum_users"),
+			"P_MAX_USERS":pkg.get("maximum_users"),
+			"P_DESC":pkg.get("description"),
+			"P_MODULES":pkg.get("allowed_module"),
+			"P_PACKAGE_ID":pkg.get("package_id")
+		}
+		req = { "data": json.dumps(params) }
+
+		response = requests.get(url, data=req, headers=headers)
+		response = json.loads(response.json())
+		if(response.get("X_ERROR_CODE") == "01"):
+			raise Exception(response.get("X_ERROR_DESC"))
+	except Exception, e:
+		raise e
+
+def create_request_log(error_code, error_desc, method, request, traceback=None):
+	response = {
+		"P_RETURN_CODE": error_code,
+		"P_RETURN_DESC": error_desc
 	}
-	req = { "data": json.dumps(params) }
+	request_log(method, json.dumps(response), request, traceback)
 
-	response = requests.get(url, data=req, headers=headers)
+def generate_random_password(len=8):
+	import random, string
+	return "".join(random.choice(string.lowercase) for i in range(len))
+
+subj = {
+	"create_customer": "New Instance Of OmniTech ERPNext is Created",
+	"delete_customer": "OmniTech ERPNext Instance is deleted",
+	"create_service": "New Instance Of Omnitech ERPNext is Activated",
+	"disconnect_service": "Omnitech ERPNext Instance has been deactivated",
+	"restart_service": "Omnitech ERPNext Instance has been re-activated"
+}
+
+def notify_user(action, params, password=None):
+	args = {}
+	customer_name = frappe.db.get_value("Sites", params.get("P_USER_NAME"), "customer")
+	if customer_name:
+		customer = frappe.get_doc("Customer", customer_name)
+		email = frappe.db.get_value("Contact", {"customer":customer_name, "is_primary_contact":1 }, "email_id")
+		args.update({
+			"full_name": customer.customer_name or "User",
+			"email": email,
+			"action": action,
+			"user": "Administrator",
+			"password": password or None,
+			"link": params.get("P_USER_NAME"),
+		})
+		
+		return send_mail(args, subj.get(action), "templates/email/email_template.html")

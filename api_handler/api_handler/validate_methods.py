@@ -1,59 +1,28 @@
 from __future__ import unicode_literals
-import frappe
 import json
+import frappe
 import frappe.utils
+from frappe import _
 from frappe.utils import cstr, flt, getdate, comma_and, cint
 from api_handler.api_handler.doctype.request_log.create_log import get_json
 from api_handler.utils import xml_to_json
-from frappe import _
-
-services_fields = {
-    'create_customer': [
-        'P_TRXN_NO', 'P_CPR_CR', 'P_CUST_NAME', 'P_USER_NAME','P_CONTACT_NO',
-        'P_EMAIL', 'P_ORDER_NO', 'P_AUTHENTICATE', "P_CIRCUIT_NO","P_ATTRIBUTE1",
-        "P_ATTRIBUTE2"
-    ],
-	'delete_customer': [
-        'P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO','P_AUTHENTICATE',
-        'P_ATTRIBUTE1','P_ATTRIBUTE2'
-    ],
-	'create_service': [
-        'P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO', 'P_PACKAGE_ID',
-        'P_AUTHENTICATE','P_ATTRIBUTE1','P_ATTRIBUTE2'
-    ],
-	'disconnect_service': [
-        'P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO', 'P_PACKAGE_ID',
-        'P_AUTHENTICATE','P_ATTRIBUTE1','P_ATTRIBUTE2'
-    ],
-	'control_action': [
-        'P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_CREDIT_ACTION','P_AUTHENTICATE',
-        'P_ATTRIBUTE1','P_ATTRIBUTE2'
-    ],
-}
-mandatory_fields = {
-    'create_customer': ['P_TRXN_NO', 'P_CPR_CR', 'P_CUST_NAME', 'P_USER_NAME','P_CONTACT_NO', 'P_EMAIL', 'P_ORDER_NO', 'P_AUTHENTICATE'],
-	'delete_customer': ['P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO','P_AUTHENTICATE'],
-	'create_service': ['P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO', 'P_PACKAGE_ID','P_AUTHENTICATE'],
-	'disconnect_service': ['P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_ORDER_NO', 'P_PACKAGE_ID','P_AUTHENTICATE'],
-	'control_action': ['P_TRXN_NO', 'P_CPR_CR', 'P_USER_NAME', 'P_CREDIT_ACTION','P_AUTHENTICATE'],
-}
-
-fields_and_types ={
-    "P_TRXN_NO": "int", "P_CPR_CR": "string", "P_CUST_NAME": "string",
-    "P_USER_NAME": "string", "P_CONTACT_NO": "string", "P_EMAIL": "string",
-    "P_ORDER_NO": "string", "P_AUTHENTICATE": "string", "P_CIRCUIT_NO": "string",
-    "P_PACKAGE_ID": "string", "P_CREDIT_ACTION": "string"
-}
+from api_handler.conf import services_fields, mandatory_fields, fields_and_types
 
 def validate_and_get_json_request():
-    validate_url()
-    xml_req = "<root>%s</root>"%(frappe.local.form_dict.data)
-    # req_params = xml_to_json(frappe.local.form_dict.data)
-    req_params = xml_to_json(xml_req)
-    frappe.local.form_dict.data = req_params
-    validate_mandatory_field(req_params)
-    validate_authentication_token(req_params)
-    validate_request_parameters(req_params)
+    if validate_request_method():
+        validate_url()
+        xml_req = "<root>%s</root>"%(frappe.local.form_dict.data)
+        req_params = xml_to_json(xml_req)
+        frappe.local.form_dict.data = req_params
+        validate_mandatory_field(req_params)
+        validate_authentication_token(req_params)
+        validate_request_parameters(req_params)
+
+def validate_request_method():
+    if frappe.request.method == "POST":
+        return True
+    else:
+        raise Exception("Invalid Request Method, Please use 'POST' method for request")
 
 def validate_url():
 	path = frappe.request.path[1:].split("/",2)
@@ -83,6 +52,7 @@ def validate_mandatory_field(req_params):
         is_valid_datatype(key, data.get(key))
 
 def is_valid_datatype(field, val):
+    print "field",field, "val",val, "type", type(val)
     # TODO type checking
     # error = Exception("Invalid data type for {0} parameter".format(field))
     # if fields_and_types.get(field) == "int":
@@ -110,35 +80,69 @@ def validate_request_parameters(req_params):
     if is_request_already_exists(cmd, params):
 		err_msg = "Ignoring Request as the similer request is already exists in scheduler queue"
 		raise Exception(err_msg)
+    else:
+        validate_request[cmd](params)
 
-    if cmd == 'create_customer':
+def validate_create_customer_request(params):
+    """validate create customer request parameters"""
+    domain = get_full_domain(params.get("P_USER_NAME"))
+    params.update({"P_USER_NAME":domain})
+    is_cpr_cr_already_assigned(params.get("P_CPR_CR"), domain, params.get("P_CUST_NAME"))
+    if is_domain_name_already_exsits(domain):
+        frappe.throw(_("{0} Domain already exist".format(domain)))
+    else:
         is_customer_already_exsits(params)
-    elif cmd == 'delete_customer':
-        # 'P_USER_NAME', 'P_ORDER_NO'
-        # check if site exsits or not ?
-        # get the customer name
-        # if site is active deactivate the site ?
-        # delete the customer
-        pass
-    elif cmd == 'create_service':
-        domain_name = params.get("P_USER_NAME")
-        if is_domain_name_already_exsits(domain_name):
-            frappe.throw(_("{0} Domain already exist".format(domain_name)))
-        else:
-            validate_domain_name(domain_name)
-    elif cmd == 'disconnect_service':
-        domain_name = params.get("P_USER_NAME")
-        if not is_domain_name_already_exsits(domain_name):
-            frappe.throw(_("Requested Domain does not exist, Please check domain name in request".format(domain_name)))
-    elif cmd == 'control_action':
-        domain_name = params.get("P_USER_NAME")
-        if not is_domain_name_already_exsits(domain_name):
-            frappe.throw(_("Requested Domain does not exist, Please check domain name in request".format(domain_name)))
+        is_valid_email(params.get("P_EMAIL"))
+
+def validate_delete_customer_request(params):
+    """validate delete customer request parameters"""
+    domain = get_full_domain(params.get("P_USER_NAME"))
+    params.update({"P_USER_NAME":domain})
+    if not is_domain_name_already_exsits(domain):
+        raise Exception(_("Requested Domain({0}) does not exist, Please check domain name in request".format(domain)))
+    # check if site is active or not ?
+    elif frappe.db.get_value("Sites",domain, "is_active") == 1:
+        raise Exception("Can not delete customer, Customer has a Active ERPNext Instance")
+    else:
+        customer = frappe.db.get_value("Sites", domain, "customer")
+        if not frappe.db.get_value("Customer", customer, "name"):
+            raise Exception("Can not link any customer with given domain, Please contact Administrator")
+
+    is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
+
+def validate_create_service_request(params):
+    """validate create service request parameters"""
+    # domain = params.get("P_USER_NAME")
+    domain = get_full_domain(params.get("P_USER_NAME"))
+    is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
+    is_valid_package_id(params.get("P_PACKAGE_ID"), domain)
+    
+    if not is_domain_name_already_exsits(domain):
+        raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(domain)))
+
+def validate_disconnect_service_request(params):
+    """validate disconnected service request parameters"""
+    # domain = params.get("P_USER_NAME")
+    domain = get_full_domain(params.get("P_USER_NAME"))
+    is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
+    is_valid_package_id(params.get("P_PACKAGE_ID"), domain)
+    
+    if not is_domain_name_already_exsits(domain):
+        raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(params.get(domain))))
+
+def validate_control_action_request(params):
+    """validate control action request parameters"""
+    # domain = params.get("P_USER_NAME")
+    domain = get_full_domain(params.get("P_USER_NAME"))
+    is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
+    
+    if not is_domain_name_already_exsits(domain):
+        raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(params.get(domain))))
 
 def is_customer_already_exsits(req_params):
     if frappe.db.get_value('Selling Settings', None, 'cust_master_name') == 'Customer Name':
         if frappe.db.get_value('Customer', req_params.get('P_CUST_NAME'), 'name'):
-            frappe.throw(_("Customer {0} is already exist").format(req_params.get('P_CUST_NAME')))
+            raise Exception(_("Customer {0} is already exist").format(req_params.get('P_CUST_NAME')))
 
 def is_domain_name_already_exsits(domain_name):
     if frappe.db.get_value("Sites",domain_name, 'name'):
@@ -151,8 +155,9 @@ def validate_domain_name(domain_name):
     # ^[w]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$
     # ^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$
     import re
-    pattern = "^[w]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$"
-    if not re.match(pattern, domain_name):
+    # pattern = "^[w]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$"
+    pattern = "^[a-zA-Z0-9]+$"
+    if not re.match(pattern, domain_name) or domain_name == "www":
         frappe.throw("Invalid Domain Name")
 
 def is_request_already_exists(service, req_params):
@@ -163,6 +168,59 @@ def is_request_already_exists(service, req_params):
     flag = False if not requests  else True
     return flag
 
+def is_valid_email(email):
+    """validate email id"""
+    import re
+    pattern = "[^@]+@[^@]+\.[^@]+"
+    if not re.match(pattern, email):
+        raise Exception("Invalid Email ID")
+
+def is_valid_cpr_cr(cpr_cr, domain, action=None, customer=None):
+    """validate CPR_CR for requested customer"""
+    customer = frappe.db.get_value("Sites", domain, "customer")
+
+    if customer:
+        if frappe.db.get_value("Customer",customer, "cpr_cr") != cpr_cr:
+            raise Exception("Invalid CPR_CR value")
+    else:
+        raise Exception("Requested Domain does not exist, Please check domain name in request".format(domain))
+
+def is_cpr_cr_already_assigned(cpr_cr, domain, customer):
+    customers = frappe.db.get_values("Customer", {"cpr_cr":cpr_cr}, "name")
+    names = [cust[0] for cust in customers]
+    if names:
+        linked_with = ", ".join(names)
+        raise Exception("CPR CR is already linked with {0} customer(s)".format(linked_with))
+
+
+def is_valid_package_id(package_id, domain):
+    """validate package id"""
+    if not frappe.db.get_value("Packages",package_id, 'name'):
+        raise Exception(_("Invalid Package ID"))
+    else:
+        customer = frappe.db.get_value("Sites", domain, "customer")
+        if customer:
+            if frappe.db.get_value("Customer",customer, "current_package") != package_id:
+                raise Exception("Package ID does not match")
+
+def get_full_domain(domain):
+    default_domain = frappe.db.get_value("Global Defaults", "Global Defaults", "default_domain")
+    if not default_domain:
+        raise Exception("Domain Name is not set, Please Contact Administrator")
+    else:
+        # domain should be subdomain.default_domain.com
+        validate_domain_name(domain)
+        return "{0}.{1}".format(domain, default_domain)
+
+validate_request = {
+    "create_service": validate_create_service_request,
+    "create_customer": validate_create_customer_request,
+    "disconnect_service": validate_disconnect_service_request,
+    "delete_customer": validate_delete_customer_request,
+    "control_action": validate_control_action_request
+}
+
+# Global Default fields validatations
 def validate_bench_path(doc, method):
     import os
     if not os.path.exists(doc.path):
@@ -173,3 +231,12 @@ def validate_token_before_save(doc, method):
     pattern = "^\d+$"
     if re.match(pattern, doc.token):
         frappe.throw("Invalid Token, Please use alpha-numeric value as token")
+
+def validate_default_domain(doc, method):
+    """Validate domain name"""
+    import re
+    # ([A-Za-z0-9]+[.{1}][A-Za-z0-9]+){1}
+    # [A-Za-z0-9]+.{1}[A-Za-z0-9]+
+    pattern = "^([a-z0-9\-]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$"
+    if not re.match(pattern, doc.default_domain):
+        frappe.throw("Invalid Domain Name")
