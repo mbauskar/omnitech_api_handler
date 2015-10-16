@@ -1,0 +1,30 @@
+<h3>{{ title }}</h3>
+<p>{{_("Dear")}} {{ full_name }},</p>
+{% if action == "create_customer" %}
+	<p>{{_("A new instance of ERPNext has been created for you")}}.</p>
+	<br>
+{% elif action == "create_service"%}
+	<p>{{_("A newly created instance of ERPNext has been activated for you")}}.</p>
+	<p>{{_("Your login id is")}}: <b>{{ user }}</b>
+	<p>{{_("Your temp password is")}}: <b>{{ password }}</b></p>
+	<p>{{_("Click on the link below to complete ERPNext setup")}}.</p>
+	<p><b><a href="{{ link }}">{{_("ERPNext")}}</a></b></p>
+	<br>
+	<p>{{_("You can also copy-paste this link in your browser")}} <a href="{{ link }}">{{ link }}</a></p>
+{% elif action == "disconnect_service"%}
+	<p>{{_("Your ERPNext Instance has been deactivated sucessfully ...")}}.</p>
+	<p>{{_("To reactivate the ERPNext Instance please contact Administor")}}</p>
+	<br>
+{% elif action == "restart_service"%}
+	<p>{{_("Your ERPNext Instance has been re-activated sucessfully ...")}}.</p>
+	<p>{{_("Click on the lik below to access the ERPNext")}}</p>
+	<p><b><a href="{{ link }}">{{_("ERPNext")}}</a></b></p>
+	<br>
+	<p>{{_("You can also copy-paste this link in your browser")}} <a href="{{ link }}">{{ link }}</a></p>
+{% elif action == "delete_customer"%}
+	<p>{{_("Your ERPNext Instance has been deleted sucessfully ...")}}.</p>
+	<p>{{_("To reactivate the ERPNext Instance please contact Administor")}}</p>
+	<br>
+{% endif %}
+<p>{{_("Thank you")}},<br>
+{{_("Team OmniTech")}}</p>
