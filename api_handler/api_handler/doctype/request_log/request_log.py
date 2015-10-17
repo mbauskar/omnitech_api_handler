@@ -12,13 +12,6 @@ class RequestLog(Document):
 		self.pass_request_to_client_esb()
 
 	def pass_request_to_client_esb(self):
-		from suds.client import Client
-
-		#TODO check the URL for wsdl
-		# url = "%s/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"%(frappe.utils.get_url())
-		url = "http://localhost:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
-		# url = "http://84.255.152.200:8000/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
-		client = Client(url, cache=None)
 		# Request and response data
 		logged_request = json.loads(self.request_parameters)
 		logged_response = json.loads(self.response)
@@ -34,6 +27,14 @@ class RequestLog(Document):
 		P_ATTRIBUTE3 = logged_request.get("P_ATTRIBUTE3") or None
 
 		try:
+			from suds.client import Client
+
+			#TODO check the URL for wsdl
+			# url = "%s/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"%(frappe.utils.get_url())
+			url = "http://localhost:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
+			# url = "http://84.255.152.200:8000/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
+			client = Client(url, cache=None)
+
 			response = client.service.AcceptRequest(P_CRM_ID=P_CRM_ID,P_SERVICE_TYPE=P_SERVICE_TYPE,
 				                                    P_CIRCUIT_NO=P_CIRCUIT_NO,P_ACTION_TYPE=P_ACTION_TYPE,
 				                                    P_RETURN_CODE=P_RETURN_CODE,P_RETURN_MESG=P_RETURN_MESG,

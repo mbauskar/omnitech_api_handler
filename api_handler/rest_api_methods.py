@@ -47,11 +47,6 @@ def create_contact(obj, args):
     contact.save(ignore_permissions=True)
 
 def delete_customer(args):
-    # 'P_USER_NAME', 'P_ORDER_NO'
-    # check if site exsits or not ?
-    # get the customer name
-    # if site is active deactivate the site ?
-    # delete the customer
 	try:
 		args = get_json(args)
 		domain_name = args.get("P_USER_NAME")
@@ -83,18 +78,26 @@ def create_service(args):
 	try:
 		if isinstance(args, unicode): args = get_json(args)
 		if is_site_already_exists(args.get("P_USER_NAME")):
+			result = {}
 			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
-				update_client_instance_package_details(args, is_active=True)
+				result = update_client_instance_package_details(args, is_active=True)
 			else:
 				configure_site(args.get("P_USER_NAME"), is_disabled=False)
 				update_sites_doc(args.get("P_USER_NAME"), is_active=True)
-				update_client_instance_package_details(args, is_active=True)
-			update_customer_package_details(args)
-			create_request_log("02", "Success", "create_service", args)
+				result = update_client_instance_package_details(args, is_active=True)
+
+			if result.get("X_ERROR_CODE") == "02":
+				update_customer_package_details(args)
+				create_request_log("02", "Success", "create_service", args)
+			else:
+				configure_site(args.get("P_USER_NAME"), is_disabled=True)
+				update_sites_doc(args.get("P_USER_NAME"), is_active=False)
+				raise Exception("Error : ", result.get("X_ERROR_DESC"))
 		else:
 			raise Exception("Requested site (%s) does not exist"%(args.get("P_USER_NAME")))
 	except Exception, e:
 		error = "%s\n%s"%(e, traceback.format_exc())
+		# print error
 		create_request_log("01", str(e), "create_service", args, error)
 
 def disconnect_service(args):
@@ -180,6 +183,7 @@ def create_site(domain_name, auth_token, pwd, is_active=False):
 		"bench use {0}".format(domain_name),
 		"bench set-config is_disabled {0}".format(0 if is_active else 1),
 		"bench set-config auth_token {0}".format(get_encrypted_token(auth_token)),
+		"bench install-app omnitechapp",
 		"bench install-app erpnext",
 		"bench use {0}".format(get_default_site()),
 	]
@@ -225,6 +229,7 @@ def update_sites_doc(domain, is_active=True):
         frappe.throw("{0} domain not found in Sites".format(domain))
 
 def configure_site(domain, is_disabled=False):
+	print "configure_site"
 	cmds = [
 		"bench use {0}".format(domain),
 		"bench set-config is_disabled {0}".format(1 if is_disabled else 0),
@@ -258,6 +263,7 @@ def get_encrypted_token(auth_token=None):
 
 def update_customer_package_details(args):
 	"""add/update entry in customer package transaction details"""
+	# TODO check append row
 	def append_row(doc, transaction_number, package_id):
 		"""Append New Child Table Row"""
 		ch = doc.append('package_transaction', {})
@@ -296,32 +302,35 @@ def update_customer_domain_details(domain, is_active=False, package_id=None, cpr
 
 	doc.save(ignore_permissions=True)
 
-def update_client_instance_package_details(args):
+def update_client_instance_package_details(args, is_active=False):
 	"""Update the package details in customer doctype"""
 	import requests
-	from api_handler.api_handler.doctype.packages import package_as_json
+	from api_handler.doctype.packages.packages import package_as_json
 
 	try:
 		token = get_encrypted_token(args.get("P_AUTHENTICATE"))
 		pkg = json.loads(package_as_json(args.get("P_PACKAGE_ID")))
-		url = "{0}/omniClient/setUserPackage".format(args.get("P_USER_NAME"))
+		url = "http://{0}/omniClient/setUserPackage".format(args.get("P_USER_NAME"))
 		headers = { "content-type":"application/x-www-form-urlencoded" }
 		params = {
 			"P_AUTHENTICATE":token,
 			"P_MIN_USERS":pkg.get("minimum_users"),
 			"P_MAX_USERS":pkg.get("maximum_users"),
 			"P_DESC":pkg.get("description"),
-			"P_MODULES":pkg.get("allowed_module"),
+			"P_MODULES":pkg.get("allowed_modules"),
 			"P_PACKAGE_ID":pkg.get("package_id")
 		}
 		req = { "data": json.dumps(params) }
 
 		response = requests.get(url, data=req, headers=headers)
-		response = json.loads(response.json())
-		if(response.get("X_ERROR_CODE") == "01"):
-			raise Exception(response.get("X_ERROR_DESC"))
+		return response.json()
 	except Exception, e:
-		raise e
+		import traceback
+		print traceback.format_exc()
+		return {
+			"X_ERROR_CODE": "01",
+			"X_ERROR_DESC": str(e)
+		}
 
 def create_request_log(error_code, error_desc, method, request, traceback=None):
 	response = {

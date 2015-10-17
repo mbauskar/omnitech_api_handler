@@ -116,6 +116,7 @@ def validate_create_service_request(params):
     domain = get_full_domain(params.get("P_USER_NAME"))
     is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
     is_valid_package_id(params.get("P_PACKAGE_ID"), domain)
+    params.update({"P_USER_NAME":domain})
     
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(domain)))
@@ -126,7 +127,8 @@ def validate_disconnect_service_request(params):
     domain = get_full_domain(params.get("P_USER_NAME"))
     is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
     is_valid_package_id(params.get("P_PACKAGE_ID"), domain)
-    
+    params.update({"P_USER_NAME":domain})
+
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(params.get(domain))))
 
@@ -135,6 +137,7 @@ def validate_control_action_request(params):
     # domain = params.get("P_USER_NAME")
     domain = get_full_domain(params.get("P_USER_NAME"))
     is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
+    params.update({"P_USER_NAME":domain})
     
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(params.get(domain))))
@@ -195,13 +198,17 @@ def is_cpr_cr_already_assigned(cpr_cr, domain, customer):
 
 def is_valid_package_id(package_id, domain):
     """validate package id"""
+    if package_id == "NA":
+        raise Exception("NA is not a valid package id")
     if not frappe.db.get_value("Packages",package_id, 'name'):
         raise Exception(_("Invalid Package ID"))
     else:
         customer = frappe.db.get_value("Sites", domain, "customer")
         if customer:
-            if frappe.db.get_value("Customer",customer, "current_package") != package_id:
-                raise Exception("Package ID does not match")
+            current_package = frappe.db.get_value("Customer",customer, "current_package")
+            if current_package != "NA":
+                if frappe.db.get_value("Customer",customer, "current_package") != package_id:
+                    raise Exception("Package ID does not match")
 
 def get_full_domain(domain):
     default_domain = frappe.db.get_value("Global Defaults", "Global Defaults", "default_domain")

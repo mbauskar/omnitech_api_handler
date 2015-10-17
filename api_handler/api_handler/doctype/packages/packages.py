@@ -10,6 +10,7 @@ class Packages(Document):
 	def validate(self):
 		# validate minimum and maximum number of user
 		self.validate_number_of_users()
+		self.validate_package_id()
 
 	def validate_number_of_users(self):
 		_min = self.minimum_users
@@ -19,6 +20,10 @@ class Packages(Document):
 			frappe.throw("Minimum number of users should be greater than or equal to 1")
 		elif _max < _min:
 			frappe.throw("Maximum number of user should be greater than Minimum Number of users")
+
+	def validate_package_id(self):
+		if self.package_id == "NA":
+			frappe.throw("NA is not a valid package id")
 
 def package_as_json(package_id):
 	pkg = frappe.get_doc("Packages", package_id)
