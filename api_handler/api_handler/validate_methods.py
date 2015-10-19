@@ -131,6 +131,8 @@ def validate_disconnect_service_request(params):
 
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(params.get(domain))))
+    elif not frappe.db.get_value("Sites", domain, "is_active"):
+        raise Exception(_("Request Domain is already disconnected"))
 
 def validate_control_action_request(params):
     """validate control action request parameters"""
@@ -141,6 +143,10 @@ def validate_control_action_request(params):
     
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(params.get(domain))))
+    elif not frappe.db.get_value("Sites", domain, "is_active") and params.get("P_CREDIT_ACTION") in ["TOS", "SUSPEND"]:
+        raise Exception(_("Request Domain is already disconnected"))
+    elif frappe.db.get_value("Sites", domain, "is_active") and params.get("P_CREDIT_ACTION") == "ROS":
+        raise Exception(_("Request Domain is already active"))
 
 def is_customer_already_exsits(req_params):
     if frappe.db.get_value('Selling Settings', None, 'cust_master_name') == 'Customer Name':
@@ -164,10 +170,18 @@ def validate_domain_name(domain_name):
         frappe.throw("Invalid Domain Name")
 
 def is_request_already_exists(service, req_params):
+    req = {}
+    
     query = """ SELECT request_data FROM `tabScheduler Task` WHERE method_name='%s' AND
                 task_status<>'Completed'"""%(service)
     results = frappe.db.sql(query, as_list=True, debug=True)
-    requests = [res[0] for res in results if json.loads(res[0]) == req_params]
+
+    req.update(req_params)
+    if req.get("P_USER_NAME"):
+        req.update({"P_USER_NAME": get_full_domain(req.get("P_USER_NAME"))})
+
+    # requests = [res[0] for res in results if json.loads(res[0]) == req_params]
+    requests = [res[0] for res in results if json.loads(res[0]) == req]
     flag = False if not requests  else True
     return flag
 
