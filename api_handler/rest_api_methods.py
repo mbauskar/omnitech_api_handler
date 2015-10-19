@@ -31,9 +31,10 @@ def create_customer(data):
 	    create_contact(customer, data)
 	    # create new site {deactivated}
 	    admin_pwd = create_new_site(data, customer.name)
-	    notify_user("create_customer", data, password=admin_pwd)
+	    notify_user("create_customer", data)
 	    create_request_log("02", "Success", "create_customer", data)
 	except Exception, e:
+		print e
 		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
 		create_request_log("01", str(e), "create_customer", data, error)
@@ -60,12 +61,14 @@ def delete_customer(args):
 				# drop-site
 				cmd = "bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name)
 				exec_cmd(cmd, cwd=get_target_banch())
+				notify_user("delete_customer", args)
 				create_request_log("02", "Success", "delete_customer", args)
 			else:
 				raise Exception("Can not delete the Customer as customer has a active site : %s"%(site.name))
 		else:
 			raise Exception("Unable to find site customer, Please contact Administrator")
 	except Exception, e:
+		print e
 		import traceback
 		print traceback.format_exc()
 		frappe.db.rollback()
@@ -88,6 +91,7 @@ def create_service(args):
 
 			if result.get("X_ERROR_CODE") == "02":
 				update_customer_package_details(args)
+				notify_user("create_service", args, password=get_admin_pwd(args.get("P_USER_NAME")))
 				create_request_log("02", "Success", "create_service", args)
 			else:
 				configure_site(args.get("P_USER_NAME"), is_disabled=True)
@@ -96,6 +100,7 @@ def create_service(args):
 		else:
 			raise Exception("Requested site (%s) does not exist"%(args.get("P_USER_NAME")))
 	except Exception, e:
+		print e
 		error = "%s\n%s"%(e, traceback.format_exc())
 		# print error
 		create_request_log("01", str(e), "create_service", args, error)
@@ -105,18 +110,21 @@ def disconnect_service(args):
 	try:
 		if isinstance(args, unicode): args = get_json(args)
 		if is_site_already_exists(args.get("P_USER_NAME")):
-			if not frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
+			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
 				configure_site(args.get("P_USER_NAME"), is_disabled=True)
 				update_sites_doc(args.get("P_USER_NAME"), is_active=False)
 				update_customer_domain_details(args.get("P_USER_NAME"), is_active=False)
+				print "notify_user",notify_user("disconnect_service", args)
 				create_request_log("02", "Success", "disconnect_service", args)
 			else:
 				frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
 		else:
 			frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
 	except Exception, e:
+		print e
 		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
+		print error
 		create_request_log("01", str(e), "disconnect_service", args, error)
 
 def restart_service(args):
@@ -125,16 +133,18 @@ def restart_service(args):
 	try:
 		if isinstance(args, unicode): args = get_json(args)
 		if is_site_already_exists(domain):
-			if frappe.db.get_value("Sites", domain, "is_active"):
+			if not frappe.db.get_value("Sites", domain, "is_active"):
 				configure_site(domain, is_disabled=False)
 				update_sites_doc(domain, is_active=True)
 				update_customer_domain_details(domain, is_active=True)
+				notify_user("restart_service", args)
 				create_request_log("02", "Success", "restart_service", args)
 			else:
 				frappe.throw("Requested site (%s) is already active"%(domain))
 		else:
 			frappe.throw("Requested site (%s) does not exists"%(domain))
 	except Exception, e:
+		print e
 		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
 		create_request_log("01", str(e), "restart_service", args, error)
@@ -205,12 +215,12 @@ def get_default_site():
 	else:
 		frappe.throw("Default Site is not configured, Please contact Administrator")
 
-# def get_default_admin_pwd():
-# 	default_pwd = frappe.db.get_value("Global Defaults","Global Defaults", "default_password")
-# 	if default_pwd:
-# 		return default_pwd
-# 	else:
-# 		frappe.throw("Site Details are not Configured, Please Contact Administrator")
+def get_admin_pwd(domain):
+	pwd = frappe.db.get_value("Sites",domain, "admin_password")
+	if pwd:
+		return pwd
+	else:
+		return None
 
 def get_target_banch():
 	path = frappe.db.get_value("Global Defaults","Global Defaults", "path")
@@ -293,7 +303,7 @@ def update_customer_package_details(args):
 	update_customer_domain_details(args.get("P_USER_NAME"), is_active=True, package_id=package_id)
 
 def update_customer_domain_details(domain, is_active=False, package_id=None, cpr_cr=None):
-	customer = frappe.db.get_value("Sites", domain, customer)
+	customer = frappe.db.get_value("Sites", domain, "customer")
 	doc = frappe.get_doc("Customer", customer)
 	doc.is_active = 1 if is_active else 0
 
@@ -325,6 +335,7 @@ def update_client_instance_package_details(args, is_active=False):
 		response = requests.get(url, data=req, headers=headers)
 		return response.json()
 	except Exception, e:
+		print e
 		import traceback
 		print traceback.format_exc()
 		return {
@@ -365,5 +376,5 @@ def notify_user(action, params, password=None):
 			"password": password or None,
 			"link": params.get("P_USER_NAME"),
 		})
-		
+
 		return send_mail(args, subj.get(action), "templates/email/email_template.html")
