@@ -18,8 +18,8 @@ def execute_web_serices():
     if data:
         for task_data in data:
             method = get_attr(task_data.method_name)
-            frappe.call(method, task_data.request_data)
-            update_status_of_method(task_data.name)
+            result = frappe.call(method, task_data.request_data)
+            update_status_of_method(task_data.name, is_completed=result)
 
 def get_attr(cmd):
 	"""get method object from cmd"""
@@ -31,9 +31,9 @@ def get_attr(cmd):
 	frappe.log("method:" + cmd)
 	return method
 
-def update_status_of_method(name):
+def update_status_of_method(name, is_completed=False):
     obj = frappe.get_doc('Scheduler Task', name)
-    obj.task_status = 'Completed'
+    obj.task_status = 'Completed' if is_completed else "Not Completed"
     obj.save(ignore_permissions=True)
 
 def complete_request_logs():

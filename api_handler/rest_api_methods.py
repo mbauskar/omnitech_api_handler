@@ -14,6 +14,7 @@ class CommandFailedError(Exception):
 	pass
 
 def create_customer(data):
+	is_completed = False
 	try:
 	    data = get_json(data)
 	    
@@ -33,11 +34,14 @@ def create_customer(data):
 	    admin_pwd = create_new_site(data, customer.name)
 	    notify_user("create_customer", data)
 	    create_request_log("02", "Success", "create_customer", data)
+	    is_completed = True
 	except Exception, e:
-		print e
 		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
+		print error
 		create_request_log("01", str(e), "create_customer", data, error)
+	finally:
+		return is_completed
 
 def create_contact(obj, args):
     contact = frappe.new_doc('Contact')
@@ -48,6 +52,7 @@ def create_contact(obj, args):
     contact.save(ignore_permissions=True)
 
 def delete_customer(args):
+	is_completed = False
 	try:
 		args = get_json(args)
 		domain_name = args.get("P_USER_NAME")
@@ -67,17 +72,20 @@ def delete_customer(args):
 				raise Exception("Can not delete the Customer as customer has a active site : %s"%(site.name))
 		else:
 			raise Exception("Unable to find site customer, Please contact Administrator")
+		is_completed = True
 	except Exception, e:
-		print e
 		import traceback
-		print traceback.format_exc()
 		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
+		print error
 		create_request_log("01", str(e), "delete_customer", args, error)
+	finally:
+		return is_completed
 
 def create_service(args):
 	"""Activate newly created service"""
 	# update customer master - is_active and CPR CR, current package id
+	is_completed = False
 	try:
 		if isinstance(args, unicode): args = get_json(args)
 		if is_site_already_exists(args.get("P_USER_NAME")):
@@ -99,14 +107,18 @@ def create_service(args):
 				raise Exception("Error : ", result.get("X_ERROR_DESC"))
 		else:
 			raise Exception("Requested site (%s) does not exist"%(args.get("P_USER_NAME")))
+		is_completed = True
 	except Exception, e:
 		print e
 		error = "%s\n%s"%(e, traceback.format_exc())
-		# print error
+		print error
 		create_request_log("01", str(e), "create_service", args, error)
+	finally:
+		return is_completed
 
 def disconnect_service(args):
 	# update customer master, is_active
+	is_completed = False
 	try:
 		if isinstance(args, unicode): args = get_json(args)
 		if is_site_already_exists(args.get("P_USER_NAME")):
@@ -120,15 +132,18 @@ def disconnect_service(args):
 				frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
 		else:
 			frappe.throw("Requested site (%s) does not exists"%(args.get("P_USER_NAME")))
+		is_completed = True
 	except Exception, e:
-		print e
 		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
 		print error
 		create_request_log("01", str(e), "disconnect_service", args, error)
+	finally:
+		return is_completed
 
 def restart_service(args):
 	# update customer master, is_active
+	is_completed = False
 	domain = args.get("P_USER_NAME")
 	try:
 		if isinstance(args, unicode): args = get_json(args)
@@ -143,18 +158,21 @@ def restart_service(args):
 				frappe.throw("Requested site (%s) is already active"%(domain))
 		else:
 			frappe.throw("Requested site (%s) does not exists"%(domain))
+		is_completed = True
 	except Exception, e:
-		print e
 		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
+		print error
 		create_request_log("01", str(e), "restart_service", args, error)
+	finally:
+		return is_completed
 
 def control_action(args):
 	args = get_json(args)
 	if args.get("P_CREDIT_ACTION") in ["TOS","SUSPEND"]:
-		disconnect_service(args);
+		return disconnect_service(args);
 	else:
-		restart_service(args)
+		return restart_service(args)
 
 def create_new_site(args, customer):
 	"""Create new site, create site doc"""
@@ -276,10 +294,10 @@ def update_customer_package_details(args):
 	# TODO check append row
 	def append_row(doc, transaction_number, package_id):
 		"""Append New Child Table Row"""
-		ch = doc.append('package_transaction', {})
+		ch = doc.append('package_transction', {})
 		ch.transaction_number = transaction_number
 		ch.package_id = package_id
-		ch.description = frape.db.get_value("Packages", package_id, "description") or "NA"
+		ch.description = frappe.db.get_value("Packages", package_id, "description") or "NA"
 		doc.save(ignore_permissions=True)
 
 	transaction_number = args.get("P_TRXN_NO")
@@ -293,7 +311,7 @@ def update_customer_package_details(args):
 	if not doc:
 		raise Exception("Customer Not Found, Please contact Administrator")
 
-	if not doc.package_transaction:
+	if not doc.package_transction:
 		append_row(doc, transaction_number, package_id)
 	else:
 		# check if package number from the child table and in request are same or not
@@ -335,7 +353,6 @@ def update_client_instance_package_details(args, is_active=False):
 		response = requests.get(url, data=req, headers=headers)
 		return response.json()
 	except Exception, e:
-		print e
 		import traceback
 		print traceback.format_exc()
 		return {
