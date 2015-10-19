@@ -69,7 +69,7 @@ def delete_customer(args):
 				notify_user("delete_customer", args)
 				create_request_log("02", "Success", "delete_customer", args)
 			else:
-				raise Exception("Can not delete the Customer as customer has a active site : %s"%(site.name))
+				raise Exception("Can not delete the Customer, Please first deactivate the site : %s"%(site.name))
 		else:
 			raise Exception("Unable to find site customer, Please contact Administrator")
 		is_completed = True

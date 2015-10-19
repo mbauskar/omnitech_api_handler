@@ -31,11 +31,11 @@ class objectJSONEncoder(simplejson.JSONEncoder):
         return simplejson.JSONEncoder.default(self, o)
 
 service_request_mapper = {
-    "create_service": "CreateServiceRequest",
-    "create_customer": "CreateCustomerRequest",
-    "disconnect_service": "DisconnectServiceRequest",
-    "delete_customer": "DeleteCustomerRequest",
-    "control_action": "ControlActionRequest"
+    "create_service": "CreateService",
+    "create_customer": "CreateCustomer",
+    "disconnect_service": "DisconnectService",
+    "delete_customer": "DeleteCustomer",
+    "control_action": "ControlAction"
 }
 
 def xml_to_json(xml, as_dict=True):

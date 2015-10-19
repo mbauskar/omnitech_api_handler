@@ -41,3 +41,7 @@ def complete_request_logs():
     for dn in logs:
         doc = frappe.get_doc("Request Log",dn[0])
         doc.save(ignore_permissions=True)
+
+def audit_services():
+    """Create csv and compare and cross check with CRM report"""
+    pass

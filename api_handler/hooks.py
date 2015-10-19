@@ -86,10 +86,10 @@ doc_events = {
 scheduler_events = {
 	"all": [
 		"api_handler.custom_scheduler_methods.execute_scheduler_methods"
-	]
-	# "daily": [
-	# 	"api_handler.tasks.daily"
-	# ],
+	],
+	"daily": [
+		"api_handler.custom_scheduler_methods.audit_services"
+	],
 	# "hourly": [
 	# 	"api_handler.tasks.hourly"
 	# ],
