@@ -44,4 +44,10 @@ def complete_request_logs():
 
 def audit_services():
     """Create csv and compare and cross check with CRM report"""
+    # Read the incoming CSV
+    # convert it into json (crm json)
+    # read entries from customer master
+    # compair the two json (erpnext)
+    # validate the fields from crm json and erpnext json
+    # update the status msg of each entries from bth crm and erpnext json
     pass
