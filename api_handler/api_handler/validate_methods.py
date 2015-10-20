@@ -65,7 +65,7 @@ def is_valid_datatype(field, val):
 
 def validate_authentication_token(req_params):
     data = req_params
-    auth_token = frappe.db.get_value('Global Defaults', None,'token')
+    auth_token = frappe.db.get_value('API Defaults', "API Defaults",'token')
 
     if auth_token:
     	if auth_token != data.get('P_AUTHENTICATE'):
@@ -225,7 +225,7 @@ def is_valid_package_id(package_id, domain):
                     raise Exception("Package ID does not match")
 
 def get_full_domain(domain):
-    default_domain = frappe.db.get_value("Global Defaults", "Global Defaults", "default_domain")
+    default_domain = frappe.db.get_value("API Defaults", "API Defaults", "default_domain")
     if not default_domain:
         raise Exception("Domain Name is not set, Please Contact Administrator")
     else:
@@ -240,24 +240,3 @@ validate_request = {
     "delete_customer": validate_delete_customer_request,
     "control_action": validate_control_action_request
 }
-
-# Global Default fields validatations
-def validate_bench_path(doc, method):
-    import os
-    if not os.path.exists(doc.path):
-        frappe.throw("<b>{0}</b><br>Directory does not exists, Please check the directory Path".format(doc.path))
-
-def validate_token_before_save(doc, method):
-    import re
-    pattern = "^\d+$"
-    if re.match(pattern, doc.token):
-        frappe.throw("Invalid Token, Please use alpha-numeric value as token")
-
-def validate_default_domain(doc, method):
-    """Validate domain name"""
-    import re
-    # ([A-Za-z0-9]+[.{1}][A-Za-z0-9]+){1}
-    # [A-Za-z0-9]+.{1}[A-Za-z0-9]+
-    pattern = "^([a-z0-9\-]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$"
-    if not re.match(pattern, doc.default_domain):
-        frappe.throw("Invalid Domain Name")

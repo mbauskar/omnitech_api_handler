@@ -220,14 +220,14 @@ def create_site(domain_name, auth_token, pwd, is_active=False):
 		exec_cmd(cmd, cwd=get_target_banch())
 
 def get_mariadb_root_pwd():
-	db_pwd = frappe.db.get_value("Global Defaults","Global Defaults", "mariadb_password")
+	db_pwd = frappe.db.get_value("API Defaults","API Defaults", "mariadb_password")
 	if db_pwd:
 		return db_pwd
 	else:
 		frappe.throw("MariaDB is not configured, Please contact Administrator")
 
 def get_default_site():
-	default_site = frappe.db.get_value("Global Defaults","Global Defaults", "default_site")
+	default_site = frappe.db.get_value("API Defaults","API Defaults", "default_site")
 	if default_site:
 		return default_site
 	else:
@@ -241,7 +241,7 @@ def get_admin_pwd(domain):
 		return None
 
 def get_target_banch():
-	path = frappe.db.get_value("Global Defaults","Global Defaults", "path")
+	path = frappe.db.get_value("API Defaults","API Defaults", "path")
 	if path:
 		return path
 	else:
@@ -285,7 +285,7 @@ def get_encrypted_token(auth_token=None):
 
 	encrypted_token = None
 	if not auth_token:
-		auth_token = frappe.db.get_value("Global Defaults", "Global Defaults", "token")
+		auth_token = frappe.db.get_value("API Defaults", "API Defaults", "token")
 	encrypted_token = hashlib.sha1(auth_token).hexdigest()[:10]
 	return encrypted_token
 

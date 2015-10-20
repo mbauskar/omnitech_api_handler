@@ -50,4 +50,20 @@ def audit_services():
     # compair the two json (erpnext)
     # validate the fields from crm json and erpnext json
     # update the status msg of each entries from bth crm and erpnext json
+    now = frappe.dateutils.now_datetime()
+    scheduler_date = get_scheduler_date()
+    path = get_audit_dir_path()
+    
+    if now.date() == scheduler_date.date():
+        pass
+
+def set_next_scheduler_date():
+    """set the next scheduler_date from the API Defaults"""
     pass
+
+def get_scheduler_date():
+    """get the scheduler date date from API defaults"""
+    pass
+
+def get_audit_dir_path():
+    """get the audit dirctory path from the API Defaults"""

@@ -664,45 +664,6 @@
  }, 
  {
   "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "token", 
-  "modified": "2015-10-19 15:47:14.107809", 
-  "name": "Global Defaults-token-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "section"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "section", 
-  "modified": "2015-10-19 15:47:14.232272", 
-  "name": "Global Defaults-section-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "disable_rounded_total"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "cb_pwds", 
-  "modified": "2015-10-19 15:47:14.458357", 
-  "name": "Global Defaults-cb_pwds-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "path"
- }, 
- {
-  "default_value": null, 
   "doc_type": "Customer", 
   "docstatus": 0, 
   "doctype": "Property Setter", 
@@ -765,32 +726,6 @@
   "property": "previous_field", 
   "property_type": "Data", 
   "value": "package_details"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "reconcile_details", 
-  "modified": "2015-10-19 17:31:04.625889", 
-  "name": "Global Defaults-reconcile_details-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "default_site"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "cb1", 
-  "modified": "2015-10-19 18:34:51.534450", 
-  "name": "Global Defaults-cb1-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "scheduled_date"
  }, 
  {
   "default_value": null, 
@@ -1002,45 +937,6 @@
  }, 
  {
   "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "days", 
-  "modified": "2015-10-19 19:53:42.420039", 
-  "name": "Global Defaults-days-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "cb1"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "scheduled_date", 
-  "modified": "2015-10-19 19:53:46.990191", 
-  "name": "Global Defaults-scheduled_date-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "audit_file_path"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "audit_file_path", 
-  "modified": "2015-10-19 19:53:52.351169", 
-  "name": "Global Defaults-audit_file_path-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "reconcile_details"
- }, 
- {
-  "default_value": null, 
   "doc_type": "Customer", 
   "docstatus": 0, 
   "doctype": "Property Setter", 
@@ -1051,19 +947,6 @@
   "property": "previous_field", 
   "property_type": "Data", 
   "value": "communications"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "default_domain", 
-  "modified": "2015-10-19 19:55:46.938671", 
-  "name": "Global Defaults-default_domain-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "path"
  }, 
  {
   "default_value": null, 
@@ -1090,44 +973,5 @@
   "property": "previous_field", 
   "property_type": "Data", 
   "value": "other_details"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "default_site", 
-  "modified": "2015-10-19 19:56:02.994738", 
-  "name": "Global Defaults-default_site-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "mariadb_password"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "mariadb_password", 
-  "modified": "2015-10-19 19:56:07.509793", 
-  "name": "Global Defaults-mariadb_password-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "cb_pwds"
- }, 
- {
-  "default_value": null, 
-  "doc_type": "Global Defaults", 
-  "docstatus": 0, 
-  "doctype": "Property Setter", 
-  "doctype_or_field": "DocField", 
-  "field_name": "path", 
-  "modified": "2015-10-19 19:56:11.448425", 
-  "name": "Global Defaults-path-previous_field", 
-  "property": "previous_field", 
-  "property_type": "Data", 
-  "value": "token"
  }
 ]
