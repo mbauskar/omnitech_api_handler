@@ -31,8 +31,9 @@ class RequestLog(Document):
 
 			#TODO check the URL for wsdl
 			# url = "%s/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"%(frappe.utils.get_url())
-			url = "http://localhost:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
-			# url = "http://84.255.152.200:8000/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
+			# url = "http://localhost:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
+			print frappe.utils.get_url()
+			url = "http://84.255.152.200:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
 			client = Client(url, cache=None)
 
 			response = client.service.AcceptRequest(P_CRM_ID=P_CRM_ID,P_SERVICE_TYPE=P_SERVICE_TYPE,
@@ -42,7 +43,8 @@ class RequestLog(Document):
 				                                    P_ATTRIBUTE3=P_ATTRIBUTE3)
 			self.esb_request = client.last_sent().str()
 			self.esb_response = str(response)
-			self.status = "Completed" if response.E_ERROR_CODE == "S" else "Not Completed"
+			self.status = "Completed" if response.X_ERROR_CODE == "S" else "Not Completed"
+			print "Completed", str(response)
 		except Exception, e:
 			import traceback
 			self.status = "Not Completed"

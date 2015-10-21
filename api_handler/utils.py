@@ -47,6 +47,7 @@ def xml_to_json(xml, as_dict=True):
             xml = objectify.fromstring(xml)
         req = objectJSONEncoder().encode(xml)
         req = json.loads(req)
+        print req
 
         req_root_tag = service_request_mapper.get(frappe.local.form_dict.cmd)
         if req.get(req_root_tag):
