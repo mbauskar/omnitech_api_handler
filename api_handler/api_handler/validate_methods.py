@@ -6,7 +6,7 @@ from frappe import _
 from frappe.utils import cstr, flt, getdate, comma_and, cint
 from api_handler.api_handler.doctype.request_log.create_log import get_json
 from api_handler.utils import xml_to_json
-from api_handler.conf import services_fields, mandatory_fields, fields_and_types
+from api_handler.conf import services_fields, mandatory_fields, fields_and_types, fields_and_length
 
 def validate_and_get_json_request():
     if validate_request_method():
@@ -15,6 +15,7 @@ def validate_and_get_json_request():
         req_params = xml_to_json(xml_req)
         frappe.local.form_dict.data = req_params
         validate_mandatory_field(req_params)
+        validate_fields_length(req_params)
         validate_authentication_token(req_params)
         validate_request_parameters(req_params)
 
@@ -51,8 +52,20 @@ def validate_mandatory_field(req_params):
 
         is_valid_datatype(key, data.get(key))
 
+def validate_fields_length(params):
+    invalid_fields = []
+
+    for key, val in params.iteritems():
+        allowed_len = fields_and_length.get(key)
+        if allowed_len and allowed_len < len(val):
+            invalid_fields.append(key)
+
+    if invalid_fields:
+        msg = "Character limit exceeded for following field(s) : %s"%(",".join(invalid_fields))
+        raise Exception(msg)
+
 def is_valid_datatype(field, val):
-    print "field",field, "val",val, "type", type(val)
+    # print "field",field, "val",val, "type", type(val)
     # TODO type checking
     # error = Exception("Invalid data type for {0} parameter".format(field))
     # if fields_and_types.get(field) == "int":
