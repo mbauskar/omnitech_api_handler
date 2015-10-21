@@ -65,7 +65,6 @@ def validate_fields_length(params):
         raise Exception(msg)
 
 def is_valid_datatype(field, val):
-    # print "field",field, "val",val, "type", type(val)
     # TODO type checking
     # error = Exception("Invalid data type for {0} parameter".format(field))
     # if fields_and_types.get(field) == "int":

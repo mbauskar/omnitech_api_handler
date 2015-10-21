@@ -47,12 +47,7 @@ def complete_request_logs():
 def audit_services():
     """Create csv and compare and cross check with CRM report"""
     from reconcile_transaction import reconsile_transactions
-    # Read the incoming CSV
-    # convert it into json (crm json)
-    # read entries from customer master
-    # compair the two json (erpnext)
-    # validate the fields from crm json and erpnext json
-    # update the status msg of each entries from bth crm and erpnext json
+
     error_code = "02"
     error_desc = "Success"
     result = None
@@ -65,7 +60,7 @@ def audit_services():
         if True:
             response = reconcile_transactions(path)
             if response.get("X_ERROR_CODE") == 02:
-                result = response.get("X_CMP_RESULT")
+                pass
             else:
                 raise Exception(response.get("X_ERROR_DESC"))
     except Exception, e:

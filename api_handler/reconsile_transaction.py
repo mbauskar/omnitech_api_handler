@@ -2,7 +2,6 @@ import frappe
 from datetime import datetime
 
 def reconsile_transactions(path):
-	print "in reconsile_transactions"
 	error_code = "02"
 	error_desc = "Success"
 	result = None
@@ -10,19 +9,15 @@ def reconsile_transactions(path):
 		erp_tx = get_customer_transaction_details()
 		crm_tx = get_crm_transaction_details(path)
 		result = compair_csv_details(erp_tx, crm_tx)
-		print "erp", erp_tx
-		print "result", result
 		save_result_to_csv(path, "erp", erp_tx)
 		save_result_to_csv(path, "result", result)
 	except Exception, e:
 		error_code = "01"
 		error_desc = str(e)
-		result = None
 	finally:
 		return {
 			"X_ERRPR_CODE": error_code,
 			"X_ERROR_DESC": error_desc,
-			"X_CMP_RESULT": result
 		}
 
 def get_customer_transaction_details():
@@ -66,7 +61,7 @@ def get_crm_transaction_details(path):
 	
 	now = frappe.utils.now_datetime()
 	file_name = "CRM_SAAS_%s.csv"%(now.strftime("%d%m%Y"))
-	file_path = join(path, file_name)
+	file_path = join(path, "esb", file_name)
 	if isfile(file_path):
 		crm_tx = {}
 		result = read_csv(file_path)
@@ -167,8 +162,6 @@ def save_result_to_csv(path, directory, content):
 	with open(file_path, 'wb') as f:
 	    writer = csv.writer(f, quoting=csv.QUOTE_ALL)
 	    writer.writerows(get_rows(content))
-	    # for row in get_rows(content):
-	    # 	writer.writerow(row)
 
 def get_rows(content):
 	rows = []

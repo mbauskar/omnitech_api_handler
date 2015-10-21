@@ -51,6 +51,7 @@ def xml_to_json(xml, as_dict=True):
 
         req_root_tag = service_request_mapper.get(frappe.local.form_dict.cmd)
         if req.get(req_root_tag):
+            result = type_correction(req.get(req_root_tag))
             if as_dict:
                 return req.get(req_root_tag)
             else:
@@ -60,7 +61,21 @@ def xml_to_json(xml, as_dict=True):
     except Exception, e:
         import traceback
         print traceback.format_exc()
-        frappe.throw("Invalid XML Request")
+        if "Invalid type" in str(e):
+            frappe.throw(str(e))
+        else:
+            frappe.throw("Invalid XML Request")
+
+def type_correction(_dict):
+    try:
+        for key, val in _dict.iteritems():
+            if key == "P_TRXN_NO":
+                _dict.update({"P_TRXN_NO":int(val)})
+            else:
+                _dict.update({key:str(val)})
+        return _dict
+    except Exception, e:
+        raise Exception("Invalid type in request parameters")
 
 service_response_mapper = {
     "create_service": "CreateServiceResponse",
