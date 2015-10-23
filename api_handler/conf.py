@@ -38,7 +38,7 @@ fields_and_types = {
 
 fields_and_length = {
     "P_CPR_CR": 15, "P_CUST_NAME": 30,
-    "P_USER_NAME": 50, "P_CONTACT_NO": 8, "P_EMAIL": 30,
+    "P_USER_NAME": 50, "P_CONTACT_NO": 10, "P_EMAIL": 30,
     "P_ORDER_NO": 15, "P_AUTHENTICATE": 15,
     "P_PACKAGE_ID": 15, "P_CREDIT_ACTION": 15,
     "P_ATTRIBUTE1": 30, "P_ATTRIBUTE2": 30,
