@@ -156,7 +156,7 @@ def save_result_to_csv(path, directory, content):
 	from os.path import join
 
 	now = frappe.utils.now_datetime()
-	file_name = "%s_SAAS_%s.csv"%("ERP_CRM" if directory=="result" else "ERP", now.strftime("%d%m%Y"))
+	file_name = "CRM_SAAS_%s.csv"%(now.strftime("%d%m%Y"))
 	file_path = join(path, directory, file_name)
 
 	with open(file_path, 'wb') as f:

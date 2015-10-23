@@ -16,7 +16,7 @@ def execute_scheduler_methods():
 
 def execute_web_serices():
     data = frappe.db.sql('''select * from `tabScheduler Task`
-                            where task_status = "Not Completed" limit 30''', as_dict=1)
+                            where task_status = "Not Completed" limit 20''', as_dict=1)
     if data:
         for task_data in data:
             method = get_attr(task_data.method_name)
