@@ -18,7 +18,7 @@ class APIDefaults(Document):
 def validate_bench_path(path):
 	import os
 	if not os.path.exists(path):
-		frappe.throw("<b>{0}</b><br>Directory does not exists, Please check the directory Path".format(doc.path))
+		frappe.throw("<b>{0}</b><br>Directory does not exists, Please check the directory Path".format(path))
 
 def validate_token(token):
 	import re
