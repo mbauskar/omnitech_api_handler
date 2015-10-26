@@ -100,6 +100,8 @@ def validate_create_customer_request(params):
     domain = get_full_domain(params.get("P_USER_NAME"))
     params.update({"P_USER_NAME":domain})
     is_cpr_cr_already_assigned(params.get("P_CPR_CR"), domain, params.get("P_CUST_NAME"))
+    validate_email(params.get("P_EMAIL"))
+    validate_contact_number("P_CONTACT_NO")
     if is_domain_name_already_exsits(domain):
         frappe.throw(_("{0} Domain already exist".format(domain)))
     else:
@@ -252,3 +254,11 @@ validate_request = {
     "delete_customer": validate_delete_customer_request,
     "control_action": validate_control_action_request
 }
+
+def validate_email(email):
+    if frappe.db.get_value("Contact",{"email_id":email},"name"):
+        raise Exception("Email ID is already in use ...")
+
+def validate_contact_number(contact):
+    if frappe.db.get_value("Contact", {"phone":contact}, "name"):
+        raise Exception("Contact Number already in use ...")
