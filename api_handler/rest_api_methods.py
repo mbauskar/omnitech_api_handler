@@ -318,6 +318,8 @@ def update_customer_package_details(args):
 		if doc.current_package != package_id:
 			append_row(doc, transaction_number, package_id)
 
+	# set package id in site
+	frappe.db.set_value("Sites", args.get("P_USER_NAME"), "package_id", package_id)
 	update_customer_domain_details(args.get("P_USER_NAME"), is_active=True, package_id=package_id)
 
 def update_customer_domain_details(domain, is_active=False, package_id=None, cpr_cr=None):
