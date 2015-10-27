@@ -367,7 +367,7 @@ def create_request_log(error_code, error_desc, method, request, traceback=None):
 		"P_RETURN_CODE": error_code,
 		"P_RETURN_DESC": error_desc
 	}
-	request_log(method, json.dumps(response), request, traceback)
+	request_log(method, json.dumps(response, indent=4), request, traceback)
 
 def generate_random_password(len=8):
 	import random, string
