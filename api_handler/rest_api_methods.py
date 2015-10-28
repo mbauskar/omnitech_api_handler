@@ -64,7 +64,9 @@ def delete_customer(args):
 				frappe.delete_doc("Customer", site.customer, ignore_permissions=True)
 
 				# drop-site
-				cmd = "bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name)
+				cmd = {
+					"bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name): "Deleting Site - {0}".format(domain_name)
+					}
 				exec_cmd(cmd, cwd=get_target_banch())
 				notify_user("delete_customer", args)
 				create_request_log("02", "Success", "delete_customer", args)
@@ -95,6 +97,9 @@ def create_service(args):
 			else:
 				configure_site(args.get("P_USER_NAME"), is_disabled=False)
 				update_sites_doc(args.get("P_USER_NAME"), is_active=True)
+				# Allowing the supervisor and nginx to reload
+				import time
+				time.sleep(5)
 				result = update_client_instance_package_details(args, is_active=True)
 
 			if result.get("X_ERROR_CODE") == "02":
@@ -126,7 +131,6 @@ def disconnect_service(args):
 				configure_site(args.get("P_USER_NAME"), is_disabled=True)
 				update_sites_doc(args.get("P_USER_NAME"), is_active=False)
 				update_customer_domain_details(args.get("P_USER_NAME"), is_active=False)
-				print "notify_user",notify_user("disconnect_service", args)
 				create_request_log("02", "Success", "disconnect_service", args)
 			else:
 				frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
@@ -205,15 +209,23 @@ def is_site_already_exists(domain):
 
 def create_site(domain_name, auth_token, pwd, is_active=False):
   	cmds = [
-		"bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(
-			get_mariadb_root_pwd(), pwd, domain_name
-		),
-		"bench use {0}".format(domain_name),
-		"bench set-config is_disabled {0}".format(0 if is_active else 1),
-		"bench set-config auth_token {0}".format(get_encrypted_token(auth_token)),
-		"bench install-app omnitechapp",
-		"bench install-app erpnext",
-		"bench use {0}".format(get_default_site()),
+		{
+			"bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(
+					get_mariadb_root_pwd(), pwd, domain_name
+				): "Creating New Site : {0}".format(domain_name)
+		},
+		{
+			"bench use {0}".format(domain_name): "Using {0}".format(domain_name)
+		},
+		{
+			"bench set-config is_disabled {0}".format(0 if is_active else 1): "Disabling {0}".format(domain_name)
+		},
+		{
+			"bench set-config auth_token {0}".format(get_encrypted_token(auth_token)): "Setting up authentication token to site"
+		},
+		{ "bench install-app omnitechapp":None },
+		{ "bench install-app erpnext": None },
+		{ "bench use {0}".format(get_default_site()): None },
 	]
 
 	for cmd in cmds:
@@ -257,23 +269,27 @@ def update_sites_doc(domain, is_active=True):
         frappe.throw("{0} domain not found in Sites".format(domain))
 
 def configure_site(domain, is_disabled=False):
-	print "configure_site"
 	cmds = [
-		"bench use {0}".format(domain),
-		"bench set-config is_disabled {0}".format(1 if is_disabled else 0),
-		"bench use {0}".format(get_default_site()),
-		"bench setup nginx",
-		"sudo supervisorctl reload frappe:",
-		"sudo /etc/init.d/nginx reload frappe:"
+		{"bench use {0}".format(domain): "Using {0}".format(domain) },
+		{
+			"bench set-config is_disabled {0}".format(1 if is_disabled else 0): "Disabling {0}".format(domain)
+		},
+		{ "bench use {0}".format(get_default_site()): None },
+		{"bench setup nginx": None if is_disabled else "Deploying {0}".format(domain) },
+		{ "sudo supervisorctl reload frappe:": None },
+		{ "sudo /etc/init.d/nginx reload frappe:": None }
 	]
 
 	for cmd in cmds:
 	    exec_cmd(cmd, cwd=get_target_banch())
 
-def exec_cmd(cmd, cwd='.'):
+def exec_cmd(cmd_dict, cwd='.'):
 	import subprocess
-	# TODO remove print
-	print "executing - {0}".format(cmd)
+
+	key = cmd_dict.keys()[0]
+	val = cmd_dict[key]
+	cmd = "echo {desc} && {cmd}".format(desc=val, cmd=key) if val else key
+
 	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=None, stderr=None)
 	return_code = p.wait()
 	if return_code > 0:
@@ -351,8 +367,6 @@ def update_client_instance_package_details(args, is_active=False):
 			"P_PACKAGE_ID":pkg.get("package_id")
 		}
 		req = { "data": json.dumps(params) }
-
-		response = requests.get(url, data=req, headers=headers)
 		return response.json()
 	except Exception, e:
 		import traceback

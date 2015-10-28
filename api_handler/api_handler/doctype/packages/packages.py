@@ -25,6 +25,11 @@ class Packages(Document):
 		if self.package_id == "NA":
 			frappe.throw("NA is not a valid package id")
 
+	def on_trash(self):
+		# check if package is linked with any site
+		if frappe.db.get_values("Sites", {"package_id":self.name}, "name"):
+			frappe.throw("Can Not Delete, Package is linked with sites")
+
 def package_as_json(package_id):
 	pkg = frappe.get_doc("Packages", package_id)
 	if not pkg:
