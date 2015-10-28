@@ -24,5 +24,6 @@ def handle():
 def create_scheduler_task(method_name, request_data):
 	schedule_task = frappe.new_doc('Scheduler Task')
 	schedule_task.method_name = method_name
+	schedule_task.action = method_name.title().replace("_", " ")
 	schedule_task.request_data = json.dumps(request_data, indent=4)
 	schedule_task.save(ignore_permissions=True)
