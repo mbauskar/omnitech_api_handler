@@ -367,6 +367,7 @@ def update_client_instance_package_details(args, is_active=False):
 			"P_PACKAGE_ID":pkg.get("package_id")
 		}
 		req = { "data": json.dumps(params) }
+		response = requests.get(url, data=req, headers=headers)
 		return response.json()
 	except Exception, e:
 		import traceback
