@@ -24,7 +24,7 @@ class objectJSONEncoder(simplejson.JSONEncoder):
         if isinstance(o, objectify.NumberElement) or isinstance(o, objectify.FloatElement):
             return float(o)
         if isinstance(o, objectify.ObjectifiedDataElement):
-            return unicode(o).encode('utf-8')
+            return unicode(o).encode('utf-8').strip()
         if hasattr(o, '__dict__'):
             #For objects with a __dict__, return the encoding of the __dict__
             return o.__dict__
