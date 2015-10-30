@@ -28,6 +28,24 @@ def get_customer_transaction_details():
 	}
 	"""
 	erp_crm = {}
+	# query = """ SELECT 
+	# 				cust.domain_name AS domain,
+	# 				cust.name AS customer_name,
+	# 				cust.current_package AS package_id,
+	# 				cust.cpr_cr AS cpr_cr,
+	# 				cust.is_active,
+	# 				cont.email_id AS email,
+	# 				cont.phone AS contact,
+	# 				ptd.description AS package_desc
+
+	# 			FROM
+	# 			    `tabPackage Transaction Details` AS ptd,
+	# 			    `tabCustomer` AS cust,
+	# 			    `tabContact` AS cont
+	# 			WHERE
+	# 			    ptd.parent=cust.name
+	# 			AND cust.current_package=ptd.package_id
+	# 			AND cont.customer=cust.name"""
 	query = """ SELECT 
 					cust.domain_name AS domain,
 					cust.name AS customer_name,
@@ -39,13 +57,17 @@ def get_customer_transaction_details():
 					ptd.description AS package_desc
 
 				FROM
-				    `tabPackage Transaction Details` AS ptd,
-				    `tabCustomer` AS cust,
+				    `tabCustomer` AS cust
+				LEFT JOIN
+				    `tabPackage Transaction Details` AS ptd
+				ON
+				    cust.name=ptd.parent
+				LEFT JOIN
 				    `tabContact` AS cont
+				ON
+					cont.customer=cust.name
 				WHERE
-				    ptd.parent=cust.name
-				AND cust.current_package=ptd.package_id
-				AND cont.customer=cust.name"""
+					cust.domain_name IS NOT NULL"""
 	result = frappe.db.sql(query, as_dict=True)
 	[erp_crm.update({ cust.get("domain"): cust }) for cust in result]
 	return erp_crm

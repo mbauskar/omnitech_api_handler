@@ -131,6 +131,9 @@ def disconnect_service(args):
 				configure_site(args.get("P_USER_NAME"), is_disabled=True)
 				update_sites_doc(args.get("P_USER_NAME"), is_active=False)
 				update_customer_domain_details(args.get("P_USER_NAME"), is_active=False)
+				# check if any site is linked with package if not then update is_assigned value of package
+				if not frappe.db.get_value("Sites",{"package_id":args.get("P_PACKAGE_ID")},"name"):
+					frappe.db.set_value("Packages", args.get("P_PACKAGE_ID"), "is_assigned", 0)
 				create_request_log("02", "Success", "disconnect_service", args)
 			else:
 				frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
@@ -336,6 +339,7 @@ def update_customer_package_details(args):
 
 	# set package id in site
 	frappe.db.set_value("Sites", args.get("P_USER_NAME"), "package_id", package_id)
+	frappe.db.set_value("Packages", args.get("P_PACKAGE_ID"), "is_assigned", 1)
 	update_customer_domain_details(args.get("P_USER_NAME"), is_active=True, package_id=package_id)
 
 def update_customer_domain_details(domain, is_active=False, package_id=None, cpr_cr=None):

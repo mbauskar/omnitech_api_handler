@@ -9,8 +9,11 @@ from frappe.model.document import Document
 class Packages(Document):
 	def validate(self):
 		# validate minimum and maximum number of user
-		self.validate_number_of_users()
-		self.validate_package_id()
+		if frappe.db.get_values("Sites", {"package_id":self.name}, "name"):
+			frappe.throw("Can not update the Package, Package is already assigned to sites!")
+		else:
+			self.validate_number_of_users()
+			self.validate_package_id()
 
 	def validate_number_of_users(self):
 		_min = self.minimum_users

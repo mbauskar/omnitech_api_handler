@@ -25,6 +25,11 @@ frappe.ui.form.on(cur_frm.doctype, {
 				.appendTo(cur_frm.fields_dict.modules_html.wrapper);
 			cur_frm.module_editor = new frappe.ModuleEditor(cur_frm, module_area)
 		}
+		if (cur_frm.doc.is_assigned == 1){
+			fields = ["minimum_users", "maximum_users", "description"];
+			cur_frm.toggle_enable(fields);
+			$(":checkbox").prop("disabled", true)
+		}
 	},
 	validate: function(frm){
 		modules = []

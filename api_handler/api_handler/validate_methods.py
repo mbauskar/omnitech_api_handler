@@ -161,6 +161,9 @@ def validate_control_action_request(params):
         raise Exception(_("Request Domain is already disconnected"))
     elif frappe.db.get_value("Sites", domain, "is_active") and params.get("P_CREDIT_ACTION") == "ROS":
         raise Exception(_("Request Domain is already active"))
+    # check if create service method is called before calling control action
+    elif frappe.db.get_value("Sites", domain, "package_id") == "NA":
+        raise Exception(_("Pacakge ID is not assigned to requested domain, First run the 'Create Service' service"))
 
 def is_customer_already_exsits(req_params):
     if frappe.db.get_value('Selling Settings', None, 'cust_master_name') == 'Customer Name':
