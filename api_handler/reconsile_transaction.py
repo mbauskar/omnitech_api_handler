@@ -138,7 +138,10 @@ def compair_csv_details(erp_tx, crm_tx):
 			if not invalid_fields:
 				msg = "Matched and %s"%("Active" if rec.get("is_active") else "Disconnected")
 			else:
-				msg = "%s fields value does not match"%(",".join(invalid_fields))
+				msg = "%s, %s fields value does not match"%(
+					"Active" if rec.get("is_active") else "Disconnected",
+					",".join(invalid_fields)
+				)
 			erp_rec.pop(key)
 
 		new_val.update({"carriage_return":msg})
@@ -146,7 +149,7 @@ def compair_csv_details(erp_tx, crm_tx):
 
 	# records missing in ESB but present in ERP
 	for key, val in erp_rec.iteritems():
-		val.update({"carriage_return": "Active but record is missing from ESB %s-%s"%(key, val)})
+		val.update({"carriage_return": "Active but record is missing from ESB %s"%(key)})
 		result.update({key:val})
 	return result
 
@@ -190,8 +193,7 @@ def get_rows(content):
 	header = [
 		"Domain","CR_CPR","CUSTOMER NAME",
 		"CONTACT","EMAIL","Package ID",
-		"Package Description","Package Details",
-		"Carriage Return"
+		"Package Description","Carriage Return"
 	]
 	rows.append(header)
 
@@ -200,7 +202,6 @@ def get_rows(content):
 		res.append(val.get("domain"))
 		res.append(val.get("cpr_cr"))
 		res.append(val.get("customer_name"))
-		res.append(val.get("contact"))
 		res.append(val.get("contact"))
 		res.append(val.get("email"))
 		res.append(val.get("package_id"))

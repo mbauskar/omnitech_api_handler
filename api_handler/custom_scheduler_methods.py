@@ -52,7 +52,7 @@ def complete_request_logs():
 
 def audit_services():
     """Create csv and compare and cross check with CRM report"""
-    from reconcile_transaction import reconsile_transactions
+    from reconsile_transaction import reconsile_transactions
 
     error_code = "02"
     error_desc = "Success"
@@ -62,8 +62,9 @@ def audit_services():
         scheduler_date = get_scheduler_date()
         path = get_audit_dir_path()
 
-        if now.date() == scheduler_date:
-            response = reconcile_transactions(path)
+        # if now.date() == scheduler_date:
+        if True:
+            response = reconsile_transactions(path)
             if response.get("X_ERROR_CODE") == 02:
                 pass
             else:
@@ -80,7 +81,6 @@ def audit_services():
 
 def set_next_scheduler_date():
     """set the next scheduler_date from the API Defaults"""
-    print "in set_next_scheduler_date"
     import datetime
 
     days = frappe.db.get_value("API Defaults", "API Defaults", "days")
@@ -90,7 +90,6 @@ def set_next_scheduler_date():
 
 def get_scheduler_date():
     """get the scheduler date date from API defaults"""
-    print "in get_scheduler_date"
     date = frappe.db.get_value("API Defaults", "API Defaults", "scheduled_date")
     if not date:
         frappe.throw("Scheduled Date is not set, Please check API Defaults")
