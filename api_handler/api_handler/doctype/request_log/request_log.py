@@ -47,7 +47,7 @@ class RequestLog(Document):
 			print "Completed", str(response)
 		except Exception, e:
 			import traceback
-			print traceback.format_exc()
+			# print traceback.format_exc()
 			self.status = "Not Completed"
 			self.error = str(traceback.format_exc())
 			self.esb_request = "<xmp>%s</xmp>"%client.last_sent().str()
