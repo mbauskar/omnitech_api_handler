@@ -9,8 +9,7 @@ import json
 
 class RequestLog(Document):
 	def on_update(self):
-		# self.pass_request_to_client_esb()
-		pass
+		self.pass_request_to_client_esb()
 
 	def pass_request_to_client_esb(self):
 		# Request and response data
@@ -31,11 +30,10 @@ class RequestLog(Document):
 			from suds.client import Client
 
 			#TODO check the URL for wsdl
-			# url = "%s/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"%(frappe.utils.get_url())
+			url = "%s/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"%(frappe.utils.get_url())
 			# url = "http://localhost:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
-			# TODO
-			print frappe.utils.get_url()
-			url = "http://84.255.152.200:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
+			print frappe.utils.get_url(), "URL", url
+			# url = "http://84.255.152.200:9777/assets/erpnext/CRM_ACCEPTANCE_MSGService.wsdl"
 			client = Client(url, cache=None)
 
 			response = client.service.AcceptRequest(P_CRM_ID=P_CRM_ID,P_SERVICE_TYPE=P_SERVICE_TYPE,
