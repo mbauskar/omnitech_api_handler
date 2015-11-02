@@ -99,7 +99,7 @@ def create_service(args):
 				update_sites_doc(args.get("P_USER_NAME"), is_active=True)
 				# Allowing the supervisor and nginx to reload
 				import time
-				time.sleep(5)
+				time.sleep(10)
 				result = update_client_instance_package_details(args, is_active=True)
 
 			if result.get("X_ERROR_CODE") == "02":
@@ -134,6 +134,7 @@ def disconnect_service(args):
 				# check if any site is linked with package if not then update is_assigned value of package
 				if not frappe.db.get_value("Sites",{"package_id":args.get("P_PACKAGE_ID")},"name"):
 					frappe.db.set_value("Packages", args.get("P_PACKAGE_ID"), "is_assigned", 0)
+				notify_user("disconnect_service", args)
 				create_request_log("02", "Success", "disconnect_service", args)
 			else:
 				frappe.throw("Requested site (%s) is already disconnected"%(args.get("P_USER_NAME")))
