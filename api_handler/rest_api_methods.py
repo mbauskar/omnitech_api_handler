@@ -59,16 +59,17 @@ def delete_customer(args):
 		site = frappe.get_doc("Sites", domain_name)
 		if site.customer:
 			if not site.is_active:
-				# delete customer and site
-				frappe.delete_doc("Sites", site.name, ignore_permissions=True)
-				frappe.delete_doc("Customer", site.customer, ignore_permissions=True)
-
 				# drop-site
 				cmd = {
 					"bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name): "Deleting Site - {0}".format(domain_name)
 					}
 				exec_cmd(cmd, cwd=get_target_banch())
+
 				notify_user("delete_customer", args)
+				# delete customer and site
+				frappe.delete_doc("Sites", site.name, ignore_permissions=True)
+				frappe.delete_doc("Customer", site.customer, ignore_permissions=True)
+
 				create_request_log("02", "Success", "delete_customer", args)
 			else:
 				raise Exception("Can not delete the Customer, Please first deactivate the site : %s"%(site.name))
