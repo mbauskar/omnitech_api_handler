@@ -64,6 +64,7 @@ def delete_customer(args):
 					"bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name): "Deleting Site - {0}".format(domain_name)
 					}
 				exec_cmd(cmd, cwd=get_target_banch())
+
 				notify_user("delete_customer", args)
 				# delete customer and site
 				frappe.delete_doc("Sites", site.name, ignore_permissions=True)
