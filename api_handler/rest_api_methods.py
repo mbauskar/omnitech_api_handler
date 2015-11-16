@@ -59,16 +59,16 @@ def delete_customer(args):
 		site = frappe.get_doc("Sites", domain_name)
 		if site.customer:
 			if not site.is_active:
-				# delete customer and site
-				frappe.delete_doc("Sites", site.name, ignore_permissions=True)
-				frappe.delete_doc("Customer", site.customer, ignore_permissions=True)
-
 				# drop-site
 				cmd = {
 					"bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name): "Deleting Site - {0}".format(domain_name)
 					}
 				exec_cmd(cmd, cwd=get_target_banch())
 				notify_user("delete_customer", args)
+				# delete customer and site
+				frappe.delete_doc("Sites", site.name, ignore_permissions=True)
+				frappe.delete_doc("Customer", site.customer, ignore_permissions=True)
+
 				create_request_log("02", "Success", "delete_customer", args)
 			else:
 				raise Exception("Can not delete the Customer, Please first deactivate the site : %s"%(site.name))
@@ -278,7 +278,7 @@ def configure_site(domain, is_disabled=False):
 		{
 			"bench set-config is_disabled {0}".format(1 if is_disabled else 0): "Disabling {0}".format(domain)
 		},
-		{ "bench use {0}".format(get_default_site()): None },
+		{ "bench use {0}".format(get_default_site()): "Setting up Default Site" },
 		{"bench setup nginx": None if is_disabled else "Deploying {0}".format(domain) },
 		{ "sudo supervisorctl reload frappe:": None },
 		{ "sudo /etc/init.d/nginx reload frappe:": None }
@@ -397,7 +397,7 @@ subj = {
 	"create_customer": "New Instance Of OmniTech ERPNext is Created",
 	"delete_customer": "OmniTech ERPNext Instance is deleted",
 	"create_service": "New Instance Of Omnitech ERPNext is Activated",
-	"disconnect_service": "Omnitech ERPNext Instance has been deactivated",
+	"disconnect_service": "Omnitech ERPNext Instance has been Deactivated",
 	"restart_service": "Omnitech ERPNext Instance has been re-activated"
 }
 

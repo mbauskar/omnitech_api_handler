@@ -198,9 +198,24 @@ def is_request_already_exists(service, req_params):
         req.update({"P_USER_NAME": get_full_domain(req.get("P_USER_NAME"))})
 
     # requests = [res[0] for res in results if json.loads(res[0]) == req_params]
-    requests = [res[0] for res in results if json.loads(res[0]) == req]
-    flag = False if not requests  else True
-    return flag
+    # requests = [res[0] for res in results if json.loads(res[0]) == req]
+    # flag = False if not requests  else True
+    
+    for res in results:
+        tasks = json.loads(res[0])
+        if tasks == req:
+            return True
+        else:            
+            if req.get("P_CUST_NAME") == tasks.get("P_CUST_NAME"):
+                return True
+            elif req.get("P_EMAIL") == tasks.get("P_EMAIL"):
+                return True
+            elif req.get("P_CONTACT_NO") == tasks.get("P_CONTACT_NO"):
+                return True
+            elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                return True
+
+    return False
 
 def is_valid_email(email):
     """validate email id"""

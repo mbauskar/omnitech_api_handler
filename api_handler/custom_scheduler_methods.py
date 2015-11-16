@@ -62,8 +62,8 @@ def audit_services():
         scheduler_date = get_scheduler_date()
         path = get_audit_dir_path()
 
-        # if now.date() == scheduler_date:
-        if True:
+        if now.date() == scheduler_date:
+        # if True:
             response = reconsile_transactions(path)
             if response.get("X_ERROR_CODE") == 02:
                 pass
