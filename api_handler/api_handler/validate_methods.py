@@ -205,15 +205,28 @@ def is_request_already_exists(service, req_params):
         tasks = json.loads(res[0])
         if tasks == req:
             return True
-        else:            
-            if req.get("P_CUST_NAME") == tasks.get("P_CUST_NAME"):
-                return True
-            elif req.get("P_EMAIL") == tasks.get("P_EMAIL"):
-                return True
-            elif req.get("P_CONTACT_NO") == tasks.get("P_CONTACT_NO"):
-                return True
-            elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
-                return True
+        else: 
+            if service == "create_customer":           
+                if req.get("P_CUST_NAME") == tasks.get("P_CUST_NAME"):
+                    return True
+                elif req.get("P_EMAIL") == tasks.get("P_EMAIL"):
+                    return True
+                elif req.get("P_CONTACT_NO") == tasks.get("P_CONTACT_NO"):
+                    return True
+                elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                    return True
+            elif service == "create_service":
+                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                    return True
+            elif service == "delete_customer":
+                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                    return True
+            elif service == "control_action":
+                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                    return True
+            elif service == "disconnect_service":
+                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                    return True
 
     return False
 
