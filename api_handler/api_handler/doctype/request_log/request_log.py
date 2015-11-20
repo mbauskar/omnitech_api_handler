@@ -8,7 +8,7 @@ from frappe.model.document import Document
 import json
 
 class RequestLog(Document):
-	def on_update(self):
+	def validate(self):
 		self.pass_request_to_client_esb()
 
 	def pass_request_to_client_esb(self):

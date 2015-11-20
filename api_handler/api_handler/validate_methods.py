@@ -222,7 +222,7 @@ def is_request_already_exists(service, req_params):
                 if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
                     return True
             elif service == "control_action":
-                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME") and req.get("P_CREDIT_ACTION") == tasks.get("P_CREDIT_ACTION"):
                     return True
             elif service == "disconnect_service":
                 if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):

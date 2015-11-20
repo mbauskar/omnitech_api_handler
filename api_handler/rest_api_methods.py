@@ -61,7 +61,7 @@ def delete_customer(args):
 			if not site.is_active:
 				# drop-site
 				cmd = {
-					"bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name): "Deleting Site - {0}".format(domain_name)
+					"../../bin/bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name): "Deleting Site - {0}".format(domain_name)
 					}
 				exec_cmd(cmd, cwd=get_target_banch())
 
@@ -215,22 +215,22 @@ def is_site_already_exists(domain):
 def create_site(domain_name, auth_token, pwd, is_active=False):
   	cmds = [
 		{
-			"bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(
+			"../../bin/bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(
 					get_mariadb_root_pwd(), pwd, domain_name
 				): "Creating New Site : {0}".format(domain_name)
 		},
 		{
-			"bench use {0}".format(domain_name): "Using {0}".format(domain_name)
+			"../../bin/bench use {0}".format(domain_name): "Using {0}".format(domain_name)
 		},
 		{
-			"bench set-config is_disabled {0}".format(0 if is_active else 1): "Disabling {0}".format(domain_name)
+			"../../bin/bench set-config is_disabled {0}".format(0 if is_active else 1): "Disabling {0}".format(domain_name)
 		},
 		{
-			"bench set-config auth_token {0}".format(get_encrypted_token(auth_token)): "Setting up authentication token to site"
+			"../../bin/bench set-config auth_token {0}".format(get_encrypted_token(auth_token)): "Setting up authentication token to site"
 		},
-		{ "bench install-app omnitechapp":None },
-		{ "bench install-app erpnext": None },
-		{ "bench use {0}".format(get_default_site()): None },
+		{ "../../bin/bench install-app omnitechapp":None },
+		{ "../../bin/bench install-app erpnext": None },
+		{ "../../bin/bench use {0}".format(get_default_site()): None },
 	]
 
 	for cmd in cmds:
@@ -269,20 +269,20 @@ def update_sites_doc(domain, is_active=True):
     if site:
         site.is_active = 1 if is_active else 0
         site.ignore_permissions = True
-        site.save();
+        site.save(ignore_permissions=True);
     else:
         frappe.throw("{0} domain not found in Sites".format(domain))
 
 def configure_site(domain, is_disabled=False):
 	cmds = [
-		{"bench use {0}".format(domain): "Using {0}".format(domain) },
+		{"../../bin/bench use {0}".format(domain): "Using {0}".format(domain) },
 		{
-			"bench set-config is_disabled {0}".format(1 if is_disabled else 0): "Disabling {0}".format(domain)
+			"../../bin/bench set-config is_disabled {0}".format(1 if is_disabled else 0): "Disabling {0}".format(domain)
 		},
-		{ "bench use {0}".format(get_default_site()): "Setting up Default Site" },
-		{"bench setup nginx": None if is_disabled else "Deploying {0}".format(domain) },
-		{ "sudo supervisorctl reload frappe:": None },
-		{ "sudo /etc/init.d/nginx reload frappe:": None }
+		{ "../../bin/bench use {0}".format(get_default_site()): "Setting up Default Site" },
+		{"../../bin/bench setup nginx": None if is_disabled else "Deploying {0}".format(domain) },
+		# { "sudo supervisorctl reload": None },
+		{ "sudo service nginx reload": None }
 	]
 
 	for cmd in cmds:
