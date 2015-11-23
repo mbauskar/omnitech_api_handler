@@ -94,11 +94,17 @@ def validate_request_parameters(req_params):
         raise Exception(err_msg)
     # else:
     #     validate_request[cmd](params)
+    else:
+        domain = get_full_domain(params.get("P_USER_NAME"))
+        req_params.update({"P_USER_NAME":domain})
+    # print req_params
+    # sss
 
 def validate_create_customer_request(params):
     """validate create customer request parameters"""
-    domain = get_full_domain(params.get("P_USER_NAME"))
-    params.update({"P_USER_NAME":domain})
+    # domain = get_full_domain(params.get("P_USER_NAME"))
+    # params.update({"P_USER_NAME":domain})
+    domain = params.get("P_USER_NAME")
     is_cpr_cr_already_assigned(params.get("P_CPR_CR"), domain, params.get("P_CUST_NAME"))
     validate_email(params.get("P_EMAIL"))
     validate_contact_number(params.get("P_CONTACT_NO"))
@@ -110,8 +116,9 @@ def validate_create_customer_request(params):
 
 def validate_delete_customer_request(params):
     """validate delete customer request parameters"""
-    domain = get_full_domain(params.get("P_USER_NAME"))
-    params.update({"P_USER_NAME":domain})
+    # domain = get_full_domain(params.get("P_USER_NAME"))
+    # params.update({"P_USER_NAME":domain})
+    domain = params.get("P_USER_NAME")
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain({0}) does not exist, Please check domain name in request".format(domain)))
     # check if site is active or not ?
@@ -127,10 +134,11 @@ def validate_delete_customer_request(params):
 def validate_create_service_request(params):
     """validate create service request parameters"""
     # domain = params.get("P_USER_NAME")
-    domain = get_full_domain(params.get("P_USER_NAME"))
+    # domain = get_full_domain(params.get("P_USER_NAME"))
+    domain = params.get("P_USER_NAME")
     is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
-    is_valid_package_id(params.get("P_PACKAGE_ID"), domain)
-    params.update({"P_USER_NAME":domain})
+    is_valid_package_id(params.get("P_PACKAGE_ID"), domain, is_create_service=True)
+    # params.update({"P_USER_NAME":domain})         
     
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(domain)))
@@ -138,10 +146,11 @@ def validate_create_service_request(params):
 def validate_disconnect_service_request(params):
     """validate disconnected service request parameters"""
     # domain = params.get("P_USER_NAME")
-    domain = get_full_domain(params.get("P_USER_NAME"))
+    # domain = get_full_domain(params.get("P_USER_NAME"))
+    domain = params.get("P_USER_NAME")
     is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
     is_valid_package_id(params.get("P_PACKAGE_ID"), domain)
-    params.update({"P_USER_NAME":domain})
+    # params.update({"P_USER_NAME":domain})
 
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(params.get(domain))))
@@ -151,9 +160,10 @@ def validate_disconnect_service_request(params):
 def validate_control_action_request(params):
     """validate control action request parameters"""
     # domain = params.get("P_USER_NAME")
-    domain = get_full_domain(params.get("P_USER_NAME"))
+    # domain = get_full_domain(params.get("P_USER_NAME"))
+    domain = params.get("P_USER_NAME")
     is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
-    params.update({"P_USER_NAME":domain})
+    # params.update({"P_USER_NAME":domain})
     
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(params.get(domain))))
@@ -200,7 +210,7 @@ def is_request_already_exists(service, req_params):
     # requests = [res[0] for res in results if json.loads(res[0]) == req_params]
     # requests = [res[0] for res in results if json.loads(res[0]) == req]
     # flag = False if not requests  else True
-    
+
     for res in results:
         tasks = json.loads(res[0])
         if tasks == req:
@@ -216,7 +226,7 @@ def is_request_already_exists(service, req_params):
                 elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
                     return True
             elif service == "create_service":
-                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME") and req.get("P_PACKAGE_ID") == tasks.get("P_PACKAGE_ID"):
                     return True
             elif service == "delete_customer":
                 if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
@@ -224,10 +234,9 @@ def is_request_already_exists(service, req_params):
             elif service == "control_action":
                 if req.get("P_USER_NAME") == tasks.get("P_USER_NAME") and req.get("P_CREDIT_ACTION") == tasks.get("P_CREDIT_ACTION"):
                     return True
-            elif service == "disconnect_service":
+            elif service == "disconnect_service" and req.get("P_PACKAGE_ID") == tasks.get("P_PACKAGE_ID"):
                 if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
                     return True
-
     return False
 
 def is_valid_email(email):
@@ -255,7 +264,7 @@ def is_cpr_cr_already_assigned(cpr_cr, domain, customer):
         raise Exception("CPR CR is already linked with {0} customer(s)".format(linked_with))
 
 
-def is_valid_package_id(package_id, domain):
+def is_valid_package_id(package_id, domain, is_create_service=False):
     """validate package id"""
     if package_id == "NA":
         raise Exception("NA is not a valid package id")
@@ -265,7 +274,7 @@ def is_valid_package_id(package_id, domain):
         customer = frappe.db.get_value("Sites", domain, "customer")
         if customer:
             current_package = frappe.db.get_value("Customer",customer, "current_package")
-            if current_package != "NA":
+            if current_package != "NA" and not is_create_service:
                 if frappe.db.get_value("Customer",customer, "current_package") != package_id:
                     raise Exception("Package ID does not match")
 

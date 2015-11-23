@@ -21,7 +21,9 @@ class CommandFailedError(Exception):
 def create_customer(data):
 	is_completed = False
 	try:
-	    if isinstance(args, unicode): data = get_json(data)
+	    if isinstance(data, unicode): data = get_json(data)
+
+	    print_msg("Create Customer", data.get("P_USER_NAME"))
 	    
 	    validate_request["create_customer"](data)	    
 	    
@@ -63,6 +65,7 @@ def delete_customer(args):
 	try:
 		if isinstance(args, unicode): args = get_json(args)
 		
+		print_msg("Delete Customer", args.get("P_USER_NAME"))
 		validate_request["delete_customer"](args)
 		
 		domain_name = args.get("P_USER_NAME")
@@ -102,6 +105,7 @@ def create_service(args):
 	try:
 		if isinstance(args, unicode): args = get_json(args)
 		
+		print_msg("Create Service", args.get("P_USER_NAME"))
 		validate_request["create_service"](args)
 		
 		if is_site_already_exists(args.get("P_USER_NAME")):
@@ -142,6 +146,8 @@ def disconnect_service(args, parent_service=None):
 		if isinstance(args, unicode): args = get_json(args)
 		
 		cmd = "disconnect_service" if not parent_service else parent_service
+		print_msg(cmd.upper(), args.get("P_USER_NAME"))
+		
 		validate_request[cmd](args)
 		
 		if is_site_already_exists(args.get("P_USER_NAME")):
@@ -167,7 +173,7 @@ def disconnect_service(args, parent_service=None):
 	finally:
 		return is_completed
 
-def restart_service(args):
+def restart_service(args, parent_service=None):
 	# update customer master, is_active
 	is_completed = False
 	domain = args.get("P_USER_NAME")
@@ -175,6 +181,7 @@ def restart_service(args):
 		if isinstance(args, unicode): args = get_json(args)
 		
 		cmd = "restart_service" if not parent_service else parent_service
+		print_msg(cmd.upper(), args.get("P_USER_NAME"))
 		validate_request[cmd](args)
 		
 		if is_site_already_exists(domain):
@@ -319,7 +326,7 @@ def exec_cmd(cmd_dict, cwd='.'):
 	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=None, stderr=None)
 	return_code = p.wait()
 	if return_code > 0:
-		raise CommandFailedError(cmd)
+		raise CommandFailedError("Error while executing commend : "%(val))
 
 def get_encrypted_token(auth_token=None):
 	"""get encrypted P_AUTHENTICATE"""
@@ -439,3 +446,7 @@ def notify_user(action, params, password=None):
 		})
 
 		return send_mail(args, subj.get(action), "templates/email/email_template.html")
+
+
+def print_msg(method, user_name):
+	print method, ">>", user_name
