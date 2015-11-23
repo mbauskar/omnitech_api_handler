@@ -47,6 +47,7 @@ def create_customer(data):
 	except Exception, e:
 		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
+		# pass_error = "%s, task id:%s"%(str(e), sch_id)
 		print error
 		create_request_log("01", str(e), "create_customer", data, error)
 	finally:
@@ -76,7 +77,7 @@ def delete_customer(args):
 				cmd = {
 					"../../bin/bench drop-site --root-password {0} {1}".format(get_mariadb_root_pwd(), domain_name): "Deleting Site - {0}".format(domain_name)
 					}
-				exec_cmd(cmd, cwd=get_target_banch())
+				exec_cmd(cmd, cwd=get_target_banch(), trxn_no=args.get("P_TRXN_NO"))
 
 				notify_user("delete_customer", args)
 				# delete customer and site
@@ -113,7 +114,7 @@ def create_service(args):
 			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
 				result = update_client_instance_package_details(args, is_active=True)
 			else:
-				configure_site(args.get("P_USER_NAME"), is_disabled=False)
+				configure_site(args.get("P_USER_NAME"), is_disabled=False, trxn_no=args.get("P_TRXN_NO"))
 				update_sites_doc(args.get("P_USER_NAME"), is_active=True)
 				# Allowing the supervisor and nginx to reload
 				import time
@@ -152,7 +153,7 @@ def disconnect_service(args, parent_service=None):
 		
 		if is_site_already_exists(args.get("P_USER_NAME")):
 			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
-				configure_site(args.get("P_USER_NAME"), is_disabled=True)
+				configure_site(args.get("P_USER_NAME"), is_disabled=True, trxn_no=args.get("P_TRXN_NO"))
 				update_sites_doc(args.get("P_USER_NAME"), is_active=False)
 				update_customer_domain_details(args.get("P_USER_NAME"), is_active=False)
 				# check if any site is linked with package if not then update is_assigned value of package
@@ -186,7 +187,7 @@ def restart_service(args, parent_service=None):
 		
 		if is_site_already_exists(domain):
 			if not frappe.db.get_value("Sites", domain, "is_active"):
-				configure_site(domain, is_disabled=False)
+				configure_site(domain, is_disabled=False, trxn_no=args.get("P_TRXN_NO"))
 				update_sites_doc(domain, is_active=True)
 				update_customer_domain_details(domain, is_active=True)
 				notify_user("restart_service", args)
@@ -216,7 +217,7 @@ def create_new_site(args, customer):
 	if isinstance(args, unicode): args = get_json(args)
 	if not is_site_already_exists(args.get("P_USER_NAME")):
 		pwd = generate_random_password()
-		create_site(args.get("P_USER_NAME"), args.get("P_AUTHENTICATE"), pwd, is_active=False)
+		create_site(args.get("P_USER_NAME"), args.get("P_AUTHENTICATE"), pwd, args.get("P_TRXN_NO"), is_active=False)
 		create_sites_doc(args, customer, pwd)
 		return pwd
 	else:
@@ -240,10 +241,10 @@ def is_site_already_exists(domain):
 	else:
 		return False
 
-def create_site(domain_name, auth_token, pwd, is_active=False):
+def create_site(domain_name, auth_token, pwd, trxn_no, is_active=False):
   	cmds = [
 		{
-			"../../bin/bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(
+			"../../bin/bench new-sites --mariadb-root-password {0} --admin-password {1} {2}".format(
 					get_mariadb_root_pwd(), pwd, domain_name
 				): "Creating New Site : {0}".format(domain_name)
 		},
@@ -262,7 +263,7 @@ def create_site(domain_name, auth_token, pwd, is_active=False):
 	]
 
 	for cmd in cmds:
-		exec_cmd(cmd, cwd=get_target_banch())
+		exec_cmd(cmd, cwd=get_target_banch(), trxn_no=trxn_no)
 
 def get_mariadb_root_pwd():
 	db_pwd = frappe.db.get_value("API Defaults","API Defaults", "mariadb_password")
@@ -301,7 +302,7 @@ def update_sites_doc(domain, is_active=True):
     else:
         frappe.throw("{0} domain not found in Sites".format(domain))
 
-def configure_site(domain, is_disabled=False):
+def configure_site(domain, is_disabled=False, trxn_no=None):
 	cmds = [
 		{"../../bin/bench use {0}".format(domain): "Using {0}".format(domain) },
 		{
@@ -314,9 +315,9 @@ def configure_site(domain, is_disabled=False):
 	]
 
 	for cmd in cmds:
-	    exec_cmd(cmd, cwd=get_target_banch())
+	    exec_cmd(cmd, cwd=get_target_banch(), trxn_no=trxn_no)
 
-def exec_cmd(cmd_dict, cwd='.'):
+def exec_cmd(cmd_dict, cwd='.', trxn_no=None):
 	import subprocess
 
 	key = cmd_dict.keys()[0]
@@ -326,7 +327,7 @@ def exec_cmd(cmd_dict, cwd='.'):
 	p = subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=None, stderr=None)
 	return_code = p.wait()
 	if return_code > 0:
-		raise CommandFailedError("Error while executing commend : "%(val))
+		raise CommandFailedError("Error while executing commend : %s, Transaction ID : %s"%(val, trxn_no))
 
 def get_encrypted_token(auth_token=None):
 	"""get encrypted P_AUTHENTICATE"""

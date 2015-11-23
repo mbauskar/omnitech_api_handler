@@ -24,11 +24,20 @@ def execute_web_serices():
                             ORDER BY
                                 creation ASC  limit 5''', as_dict=1)
     if data:
-        for task_data in data:
-            method = get_attr(task_data.method_name)
-            result = frappe.call(method, task_data.request_data)
-            # update_status_of_method(task_data.name, is_completed=result)
-            update_status_of_method(task_data.name)
+        try:
+            tasks = []
+            for task_data in data:
+                method = get_attr(task_data.method_name)
+                result = frappe.call(method, task_data.request_data)
+                # update_status_of_method(task_data.name, is_completed=result)
+                # update_status_of_method(task_data.name)
+                tasks.append("'%s'"%(task_data.name))
+        except Exception, e:
+            # raise e
+            print "finally",e
+        finally:
+            update_status_of_method(tasks)
+
 
 def get_attr(cmd):
 	"""get method object from cmd"""
@@ -40,11 +49,15 @@ def get_attr(cmd):
 	frappe.log("method:" + cmd)
 	return method
 
-def update_status_of_method(name, is_completed=False):
-    obj = frappe.get_doc('Scheduler Task', name)
-    # obj.task_status = 'Completed' if is_completed else "Not Completed"
-    obj.task_status = 'Completed'
-    obj.save(ignore_permissions=True)
+# def update_status_of_method(name, is_completed=False):
+def update_status_of_method(tasks):
+    # obj = frappe.get_doc('Scheduler Task', name)
+    # # obj.task_status = 'Completed' if is_completed else "Not Completed"
+    # obj.task_status = 'Completed'
+    # print obj.task_status
+    # obj.save(ignore_permissions=True)
+    query = """UPDATE `tabScheduler Task` SET task_status='Completed' WHERE name IN (%s)"""%(",".join(tasks))
+    frappe.db.sql(query)
 
 def complete_request_logs():
     logs = frappe.db.get_values("Request Log",{"status":"Not Completed"},"name")
