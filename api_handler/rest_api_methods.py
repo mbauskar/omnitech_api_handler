@@ -244,7 +244,7 @@ def is_site_already_exists(domain):
 def create_site(domain_name, auth_token, pwd, trxn_no, is_active=False):
   	cmds = [
 		{
-			"../../bin/bench new-sites --mariadb-root-password {0} --admin-password {1} {2}".format(
+			"../../bin/bench new-site --mariadb-root-password {0} --admin-password {1} {2}".format(
 					get_mariadb_root_pwd(), pwd, domain_name
 				): "Creating New Site : {0}".format(domain_name)
 		},
