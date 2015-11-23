@@ -1,14 +1,19 @@
 from __future__ import unicode_literals
+import json
 import frappe
-import json
-import frappe.utils
-from frappe.utils import cstr, flt, getdate, comma_and, cint
-from frappe import _
-from api_handler.doctype.request_log.create_log import request_log, get_json
-from api_handler.validate_methods import get_full_domain
-from utils import send_mail
 import traceback
-import json
+import frappe.utils
+from frappe import _
+from utils import send_mail
+from frappe.utils import cstr, flt, getdate, comma_and, cint
+from api_handler.validate_methods import get_full_domain
+from api_handler.doctype.request_log.create_log import request_log, get_json
+from api_handler.validate_methods import validate_request
+from api_handler.validate_methods import validate_create_customer_request
+from api_handler.validate_methods import validate_create_service_request
+from api_handler.validate_methods import validate_disconnect_service_request
+from api_handler.validate_methods import validate_delete_customer_request
+from api_handler.validate_methods import validate_control_action_request
 
 class CommandFailedError(Exception):
 	pass
@@ -16,7 +21,9 @@ class CommandFailedError(Exception):
 def create_customer(data):
 	is_completed = False
 	try:
-	    data = get_json(data)
+	    if isinstance(args, unicode): data = get_json(data)
+	    
+	    validate_request["create_customer"](data)	    
 	    
 	    # Create new customecreate_new_siter document
 	    customer = frappe.new_doc('Customer')
@@ -54,7 +61,10 @@ def create_contact(obj, args):
 def delete_customer(args):
 	is_completed = False
 	try:
-		args = get_json(args)
+		if isinstance(args, unicode): args = get_json(args)
+		
+		validate_request["delete_customer"](args)
+		
 		domain_name = args.get("P_USER_NAME")
 		site = frappe.get_doc("Sites", domain_name)
 		if site.customer:
@@ -91,6 +101,9 @@ def create_service(args):
 	is_completed = False
 	try:
 		if isinstance(args, unicode): args = get_json(args)
+		
+		validate_request["create_service"](args)
+		
 		if is_site_already_exists(args.get("P_USER_NAME")):
 			result = {}
 			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
@@ -122,11 +135,15 @@ def create_service(args):
 	finally:
 		return is_completed
 
-def disconnect_service(args):
+def disconnect_service(args, parent_service=None):
 	# update customer master, is_active
 	is_completed = False
 	try:
 		if isinstance(args, unicode): args = get_json(args)
+		
+		cmd = "disconnect_service" if not parent_service else parent_service
+		validate_request[cmd](args)
+		
 		if is_site_already_exists(args.get("P_USER_NAME")):
 			if frappe.db.get_value("Sites", args.get("P_USER_NAME"),"is_active"):
 				configure_site(args.get("P_USER_NAME"), is_disabled=True)
@@ -156,6 +173,10 @@ def restart_service(args):
 	domain = args.get("P_USER_NAME")
 	try:
 		if isinstance(args, unicode): args = get_json(args)
+		
+		cmd = "restart_service" if not parent_service else parent_service
+		validate_request[cmd](args)
+		
 		if is_site_already_exists(domain):
 			if not frappe.db.get_value("Sites", domain, "is_active"):
 				configure_site(domain, is_disabled=False)
@@ -179,9 +200,9 @@ def restart_service(args):
 def control_action(args):
 	args = get_json(args)
 	if args.get("P_CREDIT_ACTION") in ["TOS","SUSPEND"]:
-		return disconnect_service(args);
+		return disconnect_service(args, parent_service="control_action");
 	else:
-		return restart_service(args)
+		return restart_service(args, parent_service="control_action")
 
 def create_new_site(args, customer):
 	"""Create new site, create site doc"""

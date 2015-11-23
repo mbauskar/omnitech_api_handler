@@ -90,10 +90,10 @@ def validate_request_parameters(req_params):
     cmd = frappe.local.form_dict.cmd
 
     if is_request_already_exists(cmd, params):
-		err_msg = "Ignoring Request as the similer request is already exists in scheduler queue"
-		raise Exception(err_msg)
-    else:
-        validate_request[cmd](params)
+        err_msg = "Ignoring Request as the similer request is already exists in scheduler queue"
+        raise Exception(err_msg)
+    # else:
+    #     validate_request[cmd](params)
 
 def validate_create_customer_request(params):
     """validate create customer request parameters"""
