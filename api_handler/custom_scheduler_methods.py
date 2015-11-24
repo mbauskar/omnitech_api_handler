@@ -5,6 +5,7 @@ import frappe.sessions
 from response import build_response,report_error
 import api_handler
 import json
+from frappe.utils import now
 from rest_api_methods import create_customer, delete_customer, create_service, \
                             disconnect_service, control_action
 from datetime import datetime
@@ -56,7 +57,8 @@ def update_status_of_method(tasks):
     # obj.task_status = 'Completed'
     # print obj.task_status
     # obj.save(ignore_permissions=True)
-    query = """UPDATE `tabScheduler Task` SET task_status='Completed' WHERE name IN (%s)"""%(",".join(tasks))
+    query = """ UPDATE `tabScheduler Task` SET task_status='Completed',modified='%s' 
+                WHERE name IN (%s)"""%( now(), ",".join(tasks))
     frappe.db.sql(query)
 
 def complete_request_logs():

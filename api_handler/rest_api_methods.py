@@ -45,12 +45,13 @@ def create_customer(data):
 	    create_request_log("02", "Success", "create_customer", data)
 	    is_completed = True
 	except Exception, e:
-		frappe.db.rollback()
+		# frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
 		# pass_error = "%s, task id:%s"%(str(e), sch_id)
 		print error
 		create_request_log("01", str(e), "create_customer", data, error)
 	finally:
+		if is_completed: frappe.db.commit()
 		return is_completed
 
 def create_contact(obj, args):
@@ -97,6 +98,7 @@ def delete_customer(args):
 		print error
 		create_request_log("01", str(e), "delete_customer", args, error)
 	finally:
+		if is_completed: frappe.db.commit()
 		return is_completed
 
 def create_service(args):
@@ -138,6 +140,7 @@ def create_service(args):
 		print error
 		create_request_log("01", str(e), "create_service", args, error)
 	finally:
+		if is_completed: frappe.db.commit()
 		return is_completed
 
 def disconnect_service(args, parent_service=None):
@@ -172,6 +175,7 @@ def disconnect_service(args, parent_service=None):
 		print error
 		create_request_log("01", str(e), "disconnect_service", args, error)
 	finally:
+		if is_completed: frappe.db.commit()
 		return is_completed
 
 def restart_service(args, parent_service=None):
@@ -203,6 +207,7 @@ def restart_service(args, parent_service=None):
 		print error
 		create_request_log("01", str(e), "restart_service", args, error)
 	finally:
+		if is_completed: frappe.db.commit()
 		return is_completed
 
 def control_action(args):
@@ -451,3 +456,6 @@ def notify_user(action, params, password=None):
 
 def print_msg(method, user_name):
 	print method, ">>", user_name
+
+def customer_autoname(doc, method):
+	doc.name = doc.domain_name
