@@ -45,9 +45,8 @@ def create_customer(data):
 	    create_request_log("02", "Success", "create_customer", data)
 	    is_completed = True
 	except Exception, e:
-		# frappe.db.rollback()
+		frappe.db.rollback()
 		error = "%s\n%s"%(e, traceback.format_exc())
-		# pass_error = "%s, task id:%s"%(str(e), sch_id)
 		print error
 		create_request_log("01", str(e), "create_customer", data, error)
 	finally:
@@ -135,6 +134,7 @@ def create_service(args):
 			raise Exception("Requested site (%s) does not exist"%(args.get("P_USER_NAME")))
 		is_completed = True
 	except Exception, e:
+		frappe.db.rollback()
 		print e
 		error = "%s\n%s"%(e, traceback.format_exc())
 		print error
@@ -263,7 +263,7 @@ def create_site(domain_name, auth_token, pwd, trxn_no, is_active=False):
 			"../../bin/bench set-config auth_token {0}".format(get_encrypted_token(auth_token)): "Setting up authentication token to site"
 		},
 		{ "../../bin/bench install-app omnitechapp":None },
-		{ "../../bin/bench install-app erpnext": None },
+		{ "../../bin/bench install-apps erpnext": None },
 		{ "../../bin/bench use {0}".format(get_default_site()): None },
 	]
 
