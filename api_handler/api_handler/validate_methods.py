@@ -225,6 +225,8 @@ def is_request_already_exists(service, req_params):
                     return True
                 elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
                     return True
+                elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                    return True
             elif service == "create_service":
                 if req.get("P_USER_NAME") == tasks.get("P_USER_NAME") and req.get("P_PACKAGE_ID") == tasks.get("P_PACKAGE_ID"):
                     return True
@@ -274,7 +276,7 @@ def is_valid_package_id(package_id, domain, is_create_service=False):
         customer = frappe.db.get_value("Sites", domain, "customer")
         if customer:
             current_package = frappe.db.get_value("Customer",customer, "current_package")
-            if current_package != "NA" and not is_create_service:
+            if current_package != "NA" and not is_create_service and package_id != current_package:
                 if frappe.db.get_value("Customer",customer, "current_package") != package_id:
                     raise Exception("Package ID does not match")
 
