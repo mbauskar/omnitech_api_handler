@@ -263,7 +263,7 @@ def create_site(domain_name, auth_token, pwd, trxn_no, is_active=False):
 			"../../bin/bench set-config auth_token {0}".format(get_encrypted_token(auth_token)): "Setting up authentication token to site"
 		},
 		{ "../../bin/bench install-app omnitechapp":None },
-		{ "../../bin/bench install-apps erpnext": None },
+		{ "../../bin/bench install-app erpnext": None },
 		{ "../../bin/bench use {0}".format(get_default_site()): None },
 	]
 
