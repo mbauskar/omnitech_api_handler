@@ -262,9 +262,9 @@ def create_site(domain_name, auth_token, pwd, trxn_no, is_active=False):
 		{
 			"../../bin/bench set-config auth_token {0}".format(get_encrypted_token(auth_token)): "Setting up authentication token to site"
 		},
-		{ "../../bin/bench install-app omnitechapp":None },
-		{ "../../bin/bench install-app erpnext": None },
-		{ "../../bin/bench use {0}".format(get_default_site()): None },
+		{ "../../bin/bench install-app omnitechapp":"Installing Omnitech App" },
+		{ "../../bin/bench install-app erpnext": "Installing ERPNext App" },
+		{ "../../bin/bench use {0}".format(get_default_site()): "Setting up the default site" },
 	]
 
 	for cmd in cmds:
@@ -314,9 +314,9 @@ def configure_site(domain, is_disabled=False, trxn_no=None):
 			"../../bin/bench set-config is_disabled {0}".format(1 if is_disabled else 0): "Disabling {0}".format(domain)
 		},
 		{ "../../bin/bench use {0}".format(get_default_site()): "Setting up Default Site" },
-		{"../../bin/bench setup nginx": None if is_disabled else "Deploying {0}".format(domain) },
+		{"../../bin/bench setup nginx": "Deactivating {0}".format(domain) if is_disabled else "Deploying {0}".format(domain) },
 		# { "sudo supervisorctl reload": None },
-		{ "sudo service nginx reload": None }
+		{ "sudo service nginx reload": "Reloading ..." }
 	]
 
 	for cmd in cmds:
