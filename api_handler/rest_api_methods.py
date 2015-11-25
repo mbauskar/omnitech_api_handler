@@ -352,6 +352,7 @@ def get_hash_token():
 		
 		random_key = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(15))
 		token = get_encrypted_token(random_key)
+		frappe.db.set_value("API Defaults", "API Defaults", "hash_key", token)
 
 	return token
 
