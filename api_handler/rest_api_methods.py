@@ -260,7 +260,7 @@ def create_site(domain_name, auth_token, pwd, trxn_no, is_active=False):
 			"../../bin/bench set-config is_disabled {0}".format(0 if is_active else 1): "Disabling {0}".format(domain_name)
 		},
 		{
-			"../../bin/bench set-config auth_token {0}".format(get_encrypted_token(auth_token)): "Setting up authentication token to site"
+			"../../bin/bench set-config auth_token {0}".format(get_hash_token()): "Setting up authentication token to site"
 		},
 		{ "../../bin/bench install-app omnitechapp":"Installing Omnitech App" },
 		{ "../../bin/bench install-app erpnext": "Installing ERPNext App" },
@@ -343,6 +343,17 @@ def get_encrypted_token(auth_token=None):
 		auth_token = frappe.db.get_value("API Defaults", "API Defaults", "token")
 	encrypted_token = hashlib.sha1(auth_token).hexdigest()[:10]
 	return encrypted_token
+
+def get_hash_token():
+	token = frappe.db.get_value("API Defaults", "API Defaults", "hash_key")
+	if not token:
+		import string
+		import random
+		
+		random_key = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(15))
+		token = get_encrypted_token(random_key)
+
+	return token
 
 def update_customer_package_details(args):
 	"""add/update entry in customer package transaction details"""
