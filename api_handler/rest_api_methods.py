@@ -316,7 +316,7 @@ def configure_site(domain, is_disabled=False, trxn_no=None):
 		{ "../../bin/bench use {0}".format(get_default_site()): "Setting up Default Site" },
 		{"../../bin/bench setup nginx": "Deactivating {0}".format(domain) if is_disabled else "Deploying {0}".format(domain) },
 		# { "sudo supervisorctl reload": None },
-		{ "sudo service nginx reload": "Reloading ..." }
+		{ "sudo service nginx reload": "Reloading nginx" }
 	]
 
 	for cmd in cmds:
