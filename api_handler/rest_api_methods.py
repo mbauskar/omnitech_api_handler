@@ -320,7 +320,7 @@ def configure_site(domain, is_disabled=False, trxn_no=None):
 	]
 
 	for cmd in cmds:
-	    exec_cmd(cmd, cwd=get_target_banch(), trxn_no=trxn_no)
+		exec_cmd(cmd, cwd=get_target_banch(), trxn_no=trxn_no)
 
 def exec_cmd(cmd_dict, cwd='.', trxn_no=None):
 	import subprocess

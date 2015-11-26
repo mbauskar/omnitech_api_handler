@@ -105,9 +105,9 @@ def validate_create_customer_request(params):
     # domain = get_full_domain(params.get("P_USER_NAME"))
     # params.update({"P_USER_NAME":domain})
     domain = params.get("P_USER_NAME")
-    is_cpr_cr_already_assigned(params.get("P_CPR_CR"), domain, params.get("P_CUST_NAME"))
-    validate_email(params.get("P_EMAIL"))
-    validate_contact_number(params.get("P_CONTACT_NO"))
+    # is_cpr_cr_already_assigned(params.get("P_CPR_CR"), domain, params.get("P_CUST_NAME"))
+    # validate_email(params.get("P_EMAIL"))
+    # validate_contact_number(params.get("P_CONTACT_NO"))
     if is_domain_name_already_exsits(domain):
         frappe.throw(_("{0} Domain already exist".format(domain)))
     else:
@@ -139,7 +139,6 @@ def validate_create_service_request(params):
     is_valid_cpr_cr(params.get("P_CPR_CR"), domain)
     is_valid_package_id(params.get("P_PACKAGE_ID"), domain, is_create_service=True)
     # params.update({"P_USER_NAME":domain})         
-    
     if not is_domain_name_already_exsits(domain):
         raise Exception(_("Requested Domain does not exist, Please check domain name in request".format(domain)))
 
@@ -177,11 +176,13 @@ def validate_control_action_request(params):
 
 def is_customer_already_exsits(req_params):
     if frappe.db.get_value('Selling Settings', None, 'cust_master_name') == 'Customer Name':
-        if frappe.db.get_value('Customer', req_params.get('P_CUST_NAME'), 'name'):
+        # if frappe.db.get_value('Customer', req_params.get('P_CUST_NAME'), 'name'):
+        if frappe.db.get_value('Customer', req_params.get('P_USER_NAME'), 'name'):
             raise Exception(_("Customer {0} is already exist").format(req_params.get('P_CUST_NAME')))
 
 def is_domain_name_already_exsits(domain_name):
-    if frappe.db.get_value("Sites",domain_name, 'name'):
+    domain = frappe.db.get_value("Sites",domain_name, 'name')
+    if domain and domain == domain_name:
         return True
     else:
         return False
@@ -217,15 +218,15 @@ def is_request_already_exists(service, req_params):
             return True
         else: 
             if service == "create_customer":           
-                if req.get("P_CUST_NAME") == tasks.get("P_CUST_NAME"):
-                    return True
-                elif req.get("P_EMAIL") == tasks.get("P_EMAIL"):
-                    return True
-                elif req.get("P_CONTACT_NO") == tasks.get("P_CONTACT_NO"):
-                    return True
-                elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
-                    return True
-                elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                # if req.get("P_CUST_NAME") == tasks.get("P_CUST_NAME"):
+                #     return True
+                # elif req.get("P_EMAIL") == tasks.get("P_EMAIL"):
+                #     return True
+                # elif req.get("P_CONTACT_NO") == tasks.get("P_CONTACT_NO"):
+                #     return True
+                # elif req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
+                #     return True
+                if req.get("P_USER_NAME") == tasks.get("P_USER_NAME"):
                     return True
             elif service == "create_service":
                 if req.get("P_USER_NAME") == tasks.get("P_USER_NAME") and req.get("P_PACKAGE_ID") == tasks.get("P_PACKAGE_ID"):

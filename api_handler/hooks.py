@@ -67,11 +67,14 @@ api_name = "omni_api"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	# "Request Log": {
-# 	# 	"on_update": "api_handler.api_handler.doctype.request_log.create_log.pass_request_to_client_esb",
-# 	# }
-# }
+doc_events = {
+	# "Request Log": {
+	# 	"on_update": "api_handler.api_handler.doctype.request_log.create_log.pass_request_to_client_esb",
+	# }
+	"Customer": {
+		"autoname": "api_handler.rest_api_methods.customer_autoname",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
