@@ -432,7 +432,7 @@ def update_client_instance_package_details(args, is_active=False):
 def create_request_log(error_code, error_desc, method, request, traceback=None):
 	response = {
 		"P_RETURN_CODE": error_code,
-		"P_RETURN_DESC": error_desc
+		"P_RETURN_MESG": error_desc
 	}
 	request_log(method, json.dumps(response, indent=4), request, traceback)
 
