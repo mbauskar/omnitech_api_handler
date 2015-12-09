@@ -48,7 +48,7 @@ def get_customer_transaction_details():
 	# 			AND cont.customer=cust.name"""
 	query = """ SELECT 
 					cust.domain_name AS domain,
-					cust.name AS customer_name,
+					cust.customer_name AS customer_name,
 					cust.current_package AS package_id,
 					cust.cpr_cr AS cpr_cr,
 					cust.is_active,
