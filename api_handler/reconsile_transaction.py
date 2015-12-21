@@ -16,7 +16,7 @@ def reconsile_transactions(path):
 		error_desc = str(e)
 	finally:
 		return {
-			"X_ERRPR_CODE": error_code,
+			"X_ERROR_CODE": error_code,
 			"X_ERROR_DESC": error_desc,
 		}
 

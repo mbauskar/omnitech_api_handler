@@ -30,8 +30,6 @@ def execute_web_serices():
             for task_data in data:
                 method = get_attr(task_data.method_name)
                 result = frappe.call(method, task_data.request_data)
-                # update_status_of_method(task_data.name, is_completed=result)
-                # update_status_of_method(task_data.name)
                 tasks.append("'%s'"%(task_data.name))
         except Exception, e:
             # raise e
@@ -50,13 +48,7 @@ def get_attr(cmd):
 	frappe.log("method:" + cmd)
 	return method
 
-# def update_status_of_method(name, is_completed=False):
 def update_status_of_method(tasks):
-    # obj = frappe.get_doc('Scheduler Task', name)
-    # # obj.task_status = 'Completed' if is_completed else "Not Completed"
-    # obj.task_status = 'Completed'
-    # print obj.task_status
-    # obj.save(ignore_permissions=True)
     query = """ UPDATE `tabScheduler Task` SET task_status='Completed',modified='%s' 
                 WHERE name IN (%s)"""%( now(), ",".join(tasks))
     frappe.db.sql(query)
@@ -74,16 +66,26 @@ def audit_services():
     error_code = "02"
     error_desc = "Success"
     result = None
+    is_reconsile_date = False
+    data = {}
+
     try:
         now = frappe.utils.now_datetime()
         scheduler_date = get_scheduler_date()
         path = get_audit_dir_path()
+        is_reconsile_date = (now.date() == scheduler_date)
+        data = {
+            "P_TRXN_NO": 0,
+            "path": path,
+            "now_date": str(now.date()),
+            "scheduled_date": str(scheduler_date)
+        }
 
-        if now.date() == scheduler_date:
+        if is_reconsile_date:
         # if True:
             response = reconsile_transactions(path)
-            if response.get("X_ERROR_CODE") == 02:
-                pass
+            if response.get("X_ERROR_CODE") == "02":
+                set_next_scheduler_date()
             else:
                 raise Exception(response.get("X_ERROR_DESC"))
     except Exception, e:
@@ -93,8 +95,9 @@ def audit_services():
         print e
     finally:
         """create request log"""
-        print result
-        pass
+        from rest_api_methods import create_request_log
+        if is_reconsile_date: create_request_log(error_code, error_desc, "audit_services", data)
+        # if True: create_request_log(error_code, error_desc, "audit_services", data)
 
 def set_next_scheduler_date():
     """set the next scheduler_date from the API Defaults"""
@@ -115,7 +118,6 @@ def get_scheduler_date():
 
 def get_audit_dir_path():
     """get the audit dirctory path from the API Defaults"""
-    print "get_audit_dir_path"
     path = frappe.db.get_value("API Defaults", "API Defaults", "audit_file_path")
     if not path:
         frappe.throw("Set the Audit dirctory path first")
