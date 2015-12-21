@@ -13,6 +13,10 @@ def validate_and_get_json_request():
         validate_url()
         xml_req = "<root>%s</root>"%(frappe.local.form_dict.data)
         req_params = xml_to_json(xml_req)
+
+        # domain name in lowercase
+        req_params.update({"P_USER_NAME":req_params.get("P_USER_NAME").lower()})
+
         frappe.local.form_dict.data = req_params
         validate_mandatory_field(req_params)
         validate_fields_length(req_params)

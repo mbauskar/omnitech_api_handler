@@ -12,6 +12,8 @@ def reconsile_transactions(path):
 		save_result_to_csv(path, "erp", erp_tx)
 		save_result_to_csv(path, "result", result)
 	except Exception, e:
+		import traceback
+		print traceback.format_exc()
 		error_code = "01"
 		error_desc = str(e)
 	finally:
@@ -87,7 +89,7 @@ def get_crm_transaction_details(path):
 	if isfile(file_path):
 		crm_tx = {}
 		result = read_csv(file_path)
-		[crm_tx.update({r[0]:list_to_dict(r)}) for r in result]
+		[crm_tx.update({r[0]:list_to_dict(r)}) for r in result if r]
 		return crm_tx
 	else:
 		print "error"
